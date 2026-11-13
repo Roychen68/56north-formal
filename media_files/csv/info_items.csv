@@ -1,0 +1,10 @@
+id,category,icon,title,body
+1,transportation,#i-train,高鐵 (HSR),約 1.5 小時即可往返台北與高雄等各大城市。可於線上或售票機預訂座位。
+2,transportation,#i-landmark,台鐵與區間車,沿海與山線鐵路涵蓋較小的城鎮。悠遊卡適用於大多數服務。
+3,transportation,#i-pin,捷運與公車,台北和高雄捷運均提供雙語標示且環境整潔。公車路網完善且價格實惠。
+4,accommodation,#i-hotel,飯店與青年旅館,從豪華大樓到設計旅店應有盡有。週末及節慶期間請及早訂房。
+5,accommodation,#i-landmark,民宿 (B&B),溫馨且由家庭經營。在東海岸特別常見。
+6,accommodation,#i-pin,溫泉飯店,在北投、礁溪或全島的山間避暑勝地享受溫泉。
+7,shopping,#i-bag,夜市,在挑選紀念品的同時品嚐在地小吃。記得攜帶小額鈔票。
+8,shopping,#i-utensils,美味伴手禮,鳳梨酥、牛軋糖、烏龍茶。請注意海關申報規定。
+9,shopping,#i-globe,退稅,外國遊客可申請加值稅 (VAT) 退稅。請留意店面櫥窗上的標誌。

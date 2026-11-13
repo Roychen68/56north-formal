@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>臺灣旅遊推廣網站</title>
+    <link rel="stylesheet" href="bootstrap.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="d-block align-items-center navbar navbar-expand-lg">
+    <nav class="d-flex align-items-center">
+        <nav class="titles align-items-center">
+            <img src="logo.png" alt="logo">
+            <h1 class="align-items-center">臺灣旅遊推廣網站（Taiwan Tourism Website）</h1>
+        </nav>
+        <nav class="ms-auto">
+            <button type="button" class="navbar-toggler" data-bs-target="#nav" data-bs-toggle="collapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </nav>
+    </nav>
+    <nav class="navbar-collapse burger row" id="nav">
+        <a href="#area" class="link col-md col-12">區域指南</a>
+        <a href="#cultural" class="link col-md col-12">文化美食</a>
+        <a href="#contact" class="link col-md col-12">聯絡我們</a>
+        <a href="#login" class="link col-md col-12">後台登入</a>
+    </nav>
+</header>
+<main>
+    <section id="hero">
+        <picture>
+            <source media="(min-width: 768px)" srcset="./media_files/images/taiwan-cover.jpg">
+            <img src="./media_files/images/taiwan-cover-low-res.jpg" alt="cover">
+        </picture>
+    </section>
+    <section id="area"></section>
+    <section id="cultural"></section>
+    <section id="contact"></section>
+    <section id="login"></section>
+</main>
+<script src="jquery-4.0.0.min.js"></script>
+<script src="bootstrap.js"></script>
+<script src="vue.global.js"></script>
+gog<script>
+    const { createApp } = Vue
+    createApp({
+        setup() {
+            return {
+                sources: {
+                    "carousel-item": {}
+                }
+            }
+        },
+        methods: {
+            carousel() {
+                $.post("api.php",{action: "carousel"},(res) => {
+                    console.log(res)
+                })
+            }
+        },
+        mounted() {
+            carousel()
+        }
+    })
+</script>
+</body>
+</html>
