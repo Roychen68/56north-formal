@@ -1,71 +1,33 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>臺灣旅遊推廣網站</title>
-    <link rel="stylesheet" href="bootstrap.css">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title></title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="bootstrap.css">
 </head>
 <body>
-<div id="app">
-    <header>
-        <nav class="d-block align-items-center navbar navbar navbar-expand-lg">
-            <nav class="titles align-items-center">
-                <img src="logo.png" alt="logo">
-                <h1 class="align-items-center">臺灣旅遊推廣網站（Taiwan Tourism Website）</h1>
-            </nav>
-            <nav class="ms-auto">
-                <button type="button" class="navbar-toggler d-md-none d-block" @click="collapse = !collapse">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-            </nav>
+<nav class="navbar navbar-expand-lg row d-flex">
+    <nav class="logo d-flex align-items-center col gap-3">
+        <img src="./media_files/images/logo.svg" alt="logo" class="logo">
+        <h1 class="title">探索台灣</h1>
+    </nav>
+    <nav class="functions d-flex align-items-center col-auto">
+        <button class="navbar-toggler btn-icon" data-bs-target="#drawer" data-bs-toggle="drawer"><span class="navbar-toggler-icon"></span></button>
+    </nav>
+    <dialog class="drawer" id="drawer" tabindex="-1">
+        <nav class="drawer-header">
+            <h2 class="drawer-title">Menu</h2>
+            <button class="btn-close" data-bs-dismiss="drawer"></button>
         </nav>
-        <nav class="row d-lg-block" id="nav" :class="{collapse : collapse}">
-            <a href="#area" class="link col-md col-12">區域指南</a>
-            <a href="#cultural" class="link col-md col-12">文化美食</a>
-            <a href="#contact" class="link col-md col-12">聯絡我們</a>
-            <a href="#login" class="link col-md col-12">後台登入</a>
-        </nav>
-    </header>
-    <main>
-        <section id="hero">
-            <picture>
-                <source media="(min-width: 768px)" srcset="./media_files/images/taiwan-cover.jpg">
-                <img src="./media_files/images/taiwan-cover-low-res.jpg" alt="cover">
-            </picture>
-        </section>
-        <section id="area"></section>
-        <section id="cultural"></section>
-        <section id="contact"></section>
-        <section id="login"></section>
-    </main>
-</div>
-<script src="jquery-4.0.0.min.js"></script>
+    </dialog>
+</nav>
+<main>
+</main>
+<footer></footer>
 <script src="bootstrap.js"></script>
-<script src="vue.global.js"></script>
-gog
-<script>
-    const {createApp} = Vue
-    createApp({
-        data() {
-            return {
-                collapse: false,
-                sources: {
-                    "carousel-item": {}
-                }
-            }
-        },
-        methods: {
-            carousel() {
-                $.post("api.php", {action: "carousel"}, (res) => {
-                    console.log(res)
-                })
-            }
-        },
-        mounted() {
-            this.carousel()
-        }
-    }).mount("#app")
-</script>
 </body>
 </html>
