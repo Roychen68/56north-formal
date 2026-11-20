@@ -18,6 +18,10 @@ main{
     flex: 1;
 }
 
+header{
+    text-align: center;
+}
+
 img.logo{
     border-radius: 10px;
     background: #ffffff;

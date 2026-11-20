@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
@@ -7,27 +7,59 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title></title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="bootstrap.css">
+    <link rel="stylesheet" href="bootstrap-6.0-dist/css/bootstrap.css">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg row d-flex">
-    <nav class="logo d-flex align-items-center col gap-3">
-        <img src="./media_files/images/logo.svg" alt="logo" class="logo">
-        <h1 class="title">探索台灣</h1>
-    </nav>
-    <nav class="functions d-flex align-items-center col-auto">
-        <button class="navbar-toggler btn-icon" data-bs-target="#drawer" data-bs-toggle="drawer"><span class="navbar-toggler-icon"></span></button>
-    </nav>
-    <dialog class="drawer" id="drawer" tabindex="-1">
-        <nav class="drawer-header">
-            <h2 class="drawer-title">Menu</h2>
-            <button class="btn-close" data-bs-dismiss="drawer"></button>
+<div id="app">
+    <nav class="navbar navbar-expand-lg row d-flex">
+        <nav class="logo md:d-flex d-block align-items-center col gap-3">
+            <img src="./media_files/images/logo.svg" alt="logo" class="logo">
+            <h1 class="title">探索台灣</h1>
         </nav>
-    </dialog>
-</nav>
-<main>
-</main>
-<footer></footer>
-<script src="bootstrap.js"></script>
+        <nav class="functions d-flex align-items-center col-auto">
+            <button class="navbar-toggler btn-icon btn-outline" commandfor="drawer" command="show-modal" data-bs-target="#drawer"
+                    data-bs-toggle="drawer"><span class="navbar-toggler-icon"></span></button>
+        </nav>
+        <nav class="links aling-items-center d-none md:d-flex text-center">
+            <a v-for="nav in menu" :href="nav.id" class="nav-link col text-center">{{nav.label[lang]}}</a>
+        </nav>
+        <dialog class="drawer drawer-start" id="drawer" tabindex="-1">
+            <nav class="drawer-header">
+                <h2 class="drawer-title">Menu</h2>
+                <button class="btn-close" data-bs-dismiss="drawer" command="Close"></button>
+            </nav>
+            <nav class="drawer-body">
+                <ul class="nav navbar-nav">
+                    <li class="nav-item" v-for="item in menu"><a class="nav-link" :href="item[id]">{{item.label[lang]}}</a></li>
+                </ul>
+            </nav>
+        </dialog>
+    </nav>
+    <main>
+    </main>
+    <footer></footer>
+</div>
+<script type="module" src="bootstrap-6.0-dist/js/bootstrap.js"></script>
+<script src="jquery-4.0.0.min.js"></script>
+<script src="vue.3.5.45.js"></script>
+<script>
+    const {createApp} = Vue
+    createApp({
+        data() {
+            return {
+                lang: "zh-tw",
+                menu: [
+                    {id: "#regional", label: {"zh-tw": "區域指南", "en": "Regional Guide"}},
+                    {id: "#experiences", label: {"zh-tw": "文化美食", "en": "Experiences"}},
+                    {id: "#contact", label: {"zh-tw": "聯絡我們", "en": "Contact"}},
+                    {id: "#login", label: {"zh-tw": "後台登入", "en": "Login"}},
+                ],
+            }
+        },
+        methods: {},
+        mounted() {
+        }
+    }).mount("#app")
+</script>
 </body>
 </html>

@@ -3,8 +3,6 @@
 * Copyright 2011-2026 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
 * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
 */
-import { arrow, autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom";
-import { Calendar, months } from "vanilla-calendar-pro";
 //#region js/src/dom/data.ts
 /**
 * --------------------------------------------------------------------------
@@ -330,17 +328,17 @@ const getTransitionDurationFromElement = (element) => {
 const triggerTransitionEnd = (element) => {
 	element.dispatchEvent(new Event(TRANSITION_END));
 };
-const isElement = (object) => {
+const isElement$1 = (object) => {
 	if (!object || typeof object !== "object") return false;
 	return typeof object.nodeType !== "undefined";
 };
 const getElement = (object) => {
-	if (isElement(object)) return object;
+	if (isElement$1(object)) return object;
 	if (typeof object === "string" && object.length > 0) return document.querySelector(parseSelector(object));
 	return null;
 };
 const isVisible = (element) => {
-	if (!isElement(element) || element.getClientRects().length === 0) return false;
+	if (!isElement$1(element) || element.getClientRects().length === 0) return false;
 	const elementIsVisible = getComputedStyle(element).getPropertyValue("visibility") === "visible";
 	const closedDetails = element.closest("details:not([open])");
 	if (!closedDetails) return elementIsVisible;
@@ -372,7 +370,7 @@ const findShadowRoot = (element) => {
 	return findShadowRoot(element.parentNode);
 };
 const noop = () => {};
-const isRTL = () => document.documentElement.dir === "rtl";
+const isRTL$1 = () => document.documentElement.dir === "rtl";
 const execute = (possibleCallback, args = [], defaultValue = possibleCallback) => {
 	return typeof possibleCallback === "function" ? possibleCallback.call(...args) : defaultValue;
 };
@@ -442,18 +440,18 @@ var Config = class {
 		return config;
 	}
 	_mergeConfigObj(config, element) {
-		const jsonConfig = isElement(element) ? Manipulator.getDataAttribute(element, "config") : {};
+		const jsonConfig = isElement$1(element) ? Manipulator.getDataAttribute(element, "config") : {};
 		return {
 			...this.constructor.Default,
 			...typeof jsonConfig === "object" ? jsonConfig : {},
-			...isElement(element) ? Manipulator.getDataAttributes(element) : {},
+			...isElement$1(element) ? Manipulator.getDataAttributes(element) : {},
 			...typeof config === "object" ? config : {}
 		};
 	}
 	_typeCheckConfig(config, configTypes = this.constructor.DefaultType) {
 		for (const [property, expectedTypes] of Object.entries(configTypes)) {
 			const value = config[property];
-			const valueType = isElement(value) ? "element" : toType(value);
+			const valueType = isElement$1(value) ? "element" : toType(value);
 			if (!new RegExp(expectedTypes).test(valueType)) throw new TypeError(`${this.constructor.NAME.toUpperCase()}: Option "${property}" provided type "${valueType}" but expected type "${expectedTypes}".`);
 		}
 	}
@@ -983,7 +981,7 @@ var Carousel = class extends BaseComponent {
 		const rect = element.getBoundingClientRect();
 		if (this._element.classList.contains(CLASS_NAME_CENTER)) return rect.left + rect.width / 2 - (viewportRect.left + viewportRect.width / 2);
 		const padStart = Number.parseFloat(getComputedStyle(this._viewport).scrollPaddingInlineStart) || 0;
-		return isRTL() ? rect.right - (viewportRect.right - padStart) : rect.left - (viewportRect.left + padStart);
+		return isRTL$1() ? rect.right - (viewportRect.right - padStart) : rect.left - (viewportRect.left + padStart);
 	}
 	_loopTransition(isNext) {
 		const items = this._getItems();
@@ -1027,7 +1025,7 @@ var Carousel = class extends BaseComponent {
 		});
 	}
 	_loopDirection(isNext) {
-		if (isRTL()) return isNext ? DIRECTION_RIGHT : DIRECTION_LEFT;
+		if (isRTL$1()) return isNext ? DIRECTION_RIGHT : DIRECTION_LEFT;
 		return isNext ? DIRECTION_LEFT : DIRECTION_RIGHT;
 	}
 	_jumpScroll(delta) {
@@ -1114,7 +1112,7 @@ var Carousel = class extends BaseComponent {
 	}
 	_direction(from, to) {
 		const isNext = to > from;
-		if (isRTL()) return isNext ? DIRECTION_RIGHT : DIRECTION_LEFT;
+		if (isRTL$1()) return isNext ? DIRECTION_RIGHT : DIRECTION_LEFT;
 		return isNext ? DIRECTION_LEFT : DIRECTION_RIGHT;
 	}
 	_scheduleAutoplay(index = this._activeIndex) {
@@ -1332,6 +1330,1140 @@ EventHandler.on(document, EVENT_CLICK_DATA_API$6, SELECTOR_DATA_TOGGLE$9, functi
 	for (const element of SelectorEngine.getMultipleElementsFromSelector(this)) Collapse.getOrCreateInstance(element).toggle();
 });
 //#endregion
+//#region node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs
+const min = Math.min;
+const max = Math.max;
+const round = Math.round;
+const floor = Math.floor;
+const createCoords = (v) => ({
+	x: v,
+	y: v
+});
+const oppositeSideMap = {
+	left: "right",
+	right: "left",
+	bottom: "top",
+	top: "bottom"
+};
+function clamp(start, value, end) {
+	return max(start, min(value, end));
+}
+function evaluate(value, param) {
+	return typeof value === "function" ? value(param) : value;
+}
+function getSide(placement) {
+	return placement.split("-")[0];
+}
+function getAlignment(placement) {
+	return placement.split("-")[1];
+}
+function getOppositeAxis(axis) {
+	return axis === "x" ? "y" : "x";
+}
+function getAxisLength(axis) {
+	return axis === "y" ? "height" : "width";
+}
+function getSideAxis(placement) {
+	const firstChar = placement[0];
+	return firstChar === "t" || firstChar === "b" ? "y" : "x";
+}
+function getAlignmentAxis(placement) {
+	return getOppositeAxis(getSideAxis(placement));
+}
+function getAlignmentSides(placement, rects, rtl) {
+	if (rtl === void 0) rtl = false;
+	const alignment = getAlignment(placement);
+	const alignmentAxis = getAlignmentAxis(placement);
+	const length = getAxisLength(alignmentAxis);
+	let mainAlignmentSide = alignmentAxis === "x" ? alignment === (rtl ? "end" : "start") ? "right" : "left" : alignment === "start" ? "bottom" : "top";
+	if (rects.reference[length] > rects.floating[length]) mainAlignmentSide = getOppositePlacement(mainAlignmentSide);
+	return [mainAlignmentSide, getOppositePlacement(mainAlignmentSide)];
+}
+function getExpandedPlacements(placement) {
+	const oppositePlacement = getOppositePlacement(placement);
+	return [
+		getOppositeAlignmentPlacement(placement),
+		oppositePlacement,
+		getOppositeAlignmentPlacement(oppositePlacement)
+	];
+}
+function getOppositeAlignmentPlacement(placement) {
+	return placement.includes("start") ? placement.replace("start", "end") : placement.replace("end", "start");
+}
+const lrPlacement = ["left", "right"];
+const rlPlacement = ["right", "left"];
+const tbPlacement = ["top", "bottom"];
+const btPlacement = ["bottom", "top"];
+function getSideList(side, isStart, rtl) {
+	switch (side) {
+		case "top":
+		case "bottom":
+			if (rtl) return isStart ? rlPlacement : lrPlacement;
+			return isStart ? lrPlacement : rlPlacement;
+		case "left":
+		case "right": return isStart ? tbPlacement : btPlacement;
+		default: return [];
+	}
+}
+function getOppositeAxisPlacements(placement, flipAlignment, direction, rtl) {
+	const alignment = getAlignment(placement);
+	let list = getSideList(getSide(placement), direction === "start", rtl);
+	if (alignment) {
+		list = list.map((side) => side + "-" + alignment);
+		if (flipAlignment) list = list.concat(list.map(getOppositeAlignmentPlacement));
+	}
+	return list;
+}
+function getOppositePlacement(placement) {
+	const side = getSide(placement);
+	return oppositeSideMap[side] + placement.slice(side.length);
+}
+function expandPaddingObject(padding) {
+	var _padding$top, _padding$right, _padding$bottom, _padding$left;
+	return {
+		top: (_padding$top = padding.top) != null ? _padding$top : 0,
+		right: (_padding$right = padding.right) != null ? _padding$right : 0,
+		bottom: (_padding$bottom = padding.bottom) != null ? _padding$bottom : 0,
+		left: (_padding$left = padding.left) != null ? _padding$left : 0
+	};
+}
+function getPaddingObject(padding) {
+	return typeof padding !== "number" ? expandPaddingObject(padding) : {
+		top: padding,
+		right: padding,
+		bottom: padding,
+		left: padding
+	};
+}
+function rectToClientRect(rect) {
+	const { x, y, width, height } = rect;
+	return {
+		width,
+		height,
+		top: y,
+		left: x,
+		right: x + width,
+		bottom: y + height,
+		x,
+		y
+	};
+}
+//#endregion
+//#region node_modules/@floating-ui/core/dist/floating-ui.core.mjs
+function computeCoordsFromPlacement(_ref, placement, rtl) {
+	let { reference, floating } = _ref;
+	const sideAxis = getSideAxis(placement);
+	const alignmentAxis = getAlignmentAxis(placement);
+	const alignLength = getAxisLength(alignmentAxis);
+	const side = getSide(placement);
+	const isVertical = sideAxis === "y";
+	const commonX = reference.x + reference.width / 2 - floating.width / 2;
+	const commonY = reference.y + reference.height / 2 - floating.height / 2;
+	const commonAlign = reference[alignLength] / 2 - floating[alignLength] / 2;
+	let coords;
+	switch (side) {
+		case "top":
+			coords = {
+				x: commonX,
+				y: reference.y - floating.height
+			};
+			break;
+		case "bottom":
+			coords = {
+				x: commonX,
+				y: reference.y + reference.height
+			};
+			break;
+		case "right":
+			coords = {
+				x: reference.x + reference.width,
+				y: commonY
+			};
+			break;
+		case "left":
+			coords = {
+				x: reference.x - floating.width,
+				y: commonY
+			};
+			break;
+		default: coords = {
+			x: reference.x,
+			y: reference.y
+		};
+	}
+	const alignment = getAlignment(placement);
+	if (alignment) coords[alignmentAxis] += commonAlign * (alignment === "end" ? 1 : -1) * (rtl && isVertical ? -1 : 1);
+	return coords;
+}
+/**
+* Resolves with an object of overflow side offsets that determine how much the
+* element is overflowing a given clipping boundary on each side.
+* - positive = overflowing the boundary by that number of pixels
+* - negative = how many pixels left before it will overflow
+* - 0 = lies flush with the boundary
+* @see https://floating-ui.com/docs/detectOverflow
+*/
+async function detectOverflow(state, options) {
+	var _await$platform$isEle;
+	if (options === void 0) options = {};
+	const { x, y, platform, rects, elements, strategy } = state;
+	const { boundary = "clippingAncestors", rootBoundary = "viewport", elementContext = "floating", altBoundary = false, padding = 0 } = evaluate(options, state);
+	const paddingObject = getPaddingObject(padding);
+	const element = elements[altBoundary ? elementContext === "floating" ? "reference" : "floating" : elementContext];
+	const clippingClientRect = rectToClientRect(await platform.getClippingRect({
+		element: ((_await$platform$isEle = await (platform.isElement == null ? void 0 : platform.isElement(element))) != null ? _await$platform$isEle : true) ? element : element.contextElement || await (platform.getDocumentElement == null ? void 0 : platform.getDocumentElement(elements.floating)),
+		boundary,
+		rootBoundary,
+		strategy
+	}));
+	const rect = elementContext === "floating" ? {
+		x,
+		y,
+		width: rects.floating.width,
+		height: rects.floating.height
+	} : rects.reference;
+	const offsetParent = await (platform.getOffsetParent == null ? void 0 : platform.getOffsetParent(elements.floating));
+	const offsetScale = await (platform.isElement == null ? void 0 : platform.isElement(offsetParent)) && await (platform.getScale == null ? void 0 : platform.getScale(offsetParent)) || {
+		x: 1,
+		y: 1
+	};
+	const elementClientRect = rectToClientRect(platform.convertOffsetParentRelativeRectToViewportRelativeRect ? await platform.convertOffsetParentRelativeRectToViewportRelativeRect({
+		elements,
+		rect,
+		offsetParent,
+		strategy
+	}) : rect);
+	return {
+		top: (clippingClientRect.top - elementClientRect.top + paddingObject.top) / offsetScale.y,
+		bottom: (elementClientRect.bottom - clippingClientRect.bottom + paddingObject.bottom) / offsetScale.y,
+		left: (clippingClientRect.left - elementClientRect.left + paddingObject.left) / offsetScale.x,
+		right: (elementClientRect.right - clippingClientRect.right + paddingObject.right) / offsetScale.x
+	};
+}
+const MAX_RESET_COUNT = 50;
+/**
+* Computes the `x` and `y` coordinates that will place the floating element
+* next to a given reference element.
+*
+* This export does not have any `platform` interface logic. You will need to
+* write one for the platform you are using Floating UI with.
+*/
+const computePosition$1 = async (reference, floating, config) => {
+	const { placement = "bottom", strategy = "absolute", middleware = [], platform } = config;
+	const platformWithDetectOverflow = platform.detectOverflow ? platform : {
+		...platform,
+		detectOverflow
+	};
+	const rtl = await (platform.isRTL == null ? void 0 : platform.isRTL(floating));
+	let rects = await platform.getElementRects({
+		reference,
+		floating,
+		strategy
+	});
+	let { x, y } = computeCoordsFromPlacement(rects, placement, rtl);
+	let statefulPlacement = placement;
+	let resetCount = 0;
+	const middlewareData = {};
+	for (let i = 0; i < middleware.length; i++) {
+		const currentMiddleware = middleware[i];
+		if (!currentMiddleware) continue;
+		const { name, fn } = currentMiddleware;
+		const { x: nextX, y: nextY, data, reset } = await fn({
+			x,
+			y,
+			initialPlacement: placement,
+			placement: statefulPlacement,
+			strategy,
+			middlewareData,
+			rects,
+			platform: platformWithDetectOverflow,
+			elements: {
+				reference,
+				floating
+			}
+		});
+		x = nextX != null ? nextX : x;
+		y = nextY != null ? nextY : y;
+		middlewareData[name] = {
+			...middlewareData[name],
+			...data
+		};
+		if (reset && resetCount < MAX_RESET_COUNT) {
+			resetCount++;
+			if (typeof reset === "object") {
+				if (reset.placement) statefulPlacement = reset.placement;
+				if (reset.rects) rects = reset.rects === true ? await platform.getElementRects({
+					reference,
+					floating,
+					strategy
+				}) : reset.rects;
+				({x, y} = computeCoordsFromPlacement(rects, statefulPlacement, rtl));
+			}
+			i = -1;
+		}
+	}
+	return {
+		x,
+		y,
+		placement: statefulPlacement,
+		strategy,
+		middlewareData
+	};
+};
+/**
+* Provides data to position an inner element of the floating element so that it
+* appears centered to the reference element.
+* @see https://floating-ui.com/docs/arrow
+*/
+const arrow$1 = (options) => ({
+	name: "arrow",
+	options,
+	async fn(state) {
+		const { x, y, placement, rects, platform, elements, middlewareData } = state;
+		const { element, padding = 0 } = evaluate(options, state) || {};
+		if (element == null) return {};
+		const paddingObject = getPaddingObject(padding);
+		const coords = {
+			x,
+			y
+		};
+		const axis = getAlignmentAxis(placement);
+		const length = getAxisLength(axis);
+		const arrowDimensions = await platform.getDimensions(element);
+		const isYAxis = axis === "y";
+		const minProp = isYAxis ? "top" : "left";
+		const maxProp = isYAxis ? "bottom" : "right";
+		const clientProp = isYAxis ? "clientHeight" : "clientWidth";
+		const endDiff = rects.reference[length] + rects.reference[axis] - coords[axis] - rects.floating[length];
+		const startDiff = coords[axis] - rects.reference[axis];
+		const arrowOffsetParent = await (platform.getOffsetParent == null ? void 0 : platform.getOffsetParent(element));
+		let clientSize = arrowOffsetParent ? arrowOffsetParent[clientProp] : 0;
+		if (!clientSize || !await (platform.isElement == null ? void 0 : platform.isElement(arrowOffsetParent))) clientSize = elements.floating[clientProp] || rects.floating[length];
+		const centerToReference = endDiff / 2 - startDiff / 2;
+		const largestPossiblePadding = clientSize / 2 - arrowDimensions[length] / 2 - 1;
+		const minPadding = min(paddingObject[minProp], largestPossiblePadding);
+		const maxPadding = min(paddingObject[maxProp], largestPossiblePadding);
+		const max = clientSize - arrowDimensions[length] - maxPadding;
+		const center = clientSize / 2 - arrowDimensions[length] / 2 + centerToReference;
+		const offset = clamp(minPadding, center, max);
+		const shouldAddOffset = !middlewareData.arrow && getAlignment(placement) != null && center !== offset && rects.reference[length] / 2 - (center < minPadding ? minPadding : maxPadding) - arrowDimensions[length] / 2 < 0;
+		const alignmentOffset = shouldAddOffset ? center < minPadding ? center - minPadding : center - max : 0;
+		return {
+			[axis]: coords[axis] + alignmentOffset,
+			data: {
+				[axis]: offset,
+				centerOffset: center - offset - alignmentOffset,
+				...shouldAddOffset && { alignmentOffset }
+			},
+			reset: shouldAddOffset
+		};
+	}
+});
+/**
+* Optimizes the visibility of the floating element by flipping the `placement`
+* in order to keep it in view when the preferred placement(s) will overflow the
+* clipping boundary. Alternative to `autoPlacement`.
+* @see https://floating-ui.com/docs/flip
+*/
+const flip$1 = function(options) {
+	if (options === void 0) options = {};
+	return {
+		name: "flip",
+		options,
+		async fn(state) {
+			var _middlewareData$arrow, _middlewareData$flip;
+			const { placement, middlewareData, rects, initialPlacement, platform, elements } = state;
+			const { mainAxis: checkMainAxis = true, crossAxis: checkCrossAxis = true, fallbackPlacements: specifiedFallbackPlacements, fallbackStrategy = "bestFit", fallbackAxisSideDirection = "none", flipAlignment = true, ...detectOverflowOptions } = evaluate(options, state);
+			if ((_middlewareData$arrow = middlewareData.arrow) != null && _middlewareData$arrow.alignmentOffset) return {};
+			const side = getSide(placement);
+			const initialSideAxis = getSideAxis(initialPlacement);
+			const isBasePlacement = getSide(initialPlacement) === initialPlacement;
+			const rtl = await (platform.isRTL == null ? void 0 : platform.isRTL(elements.floating));
+			const fallbackPlacements = specifiedFallbackPlacements || (isBasePlacement || !flipAlignment ? [getOppositePlacement(initialPlacement)] : getExpandedPlacements(initialPlacement));
+			const hasFallbackAxisSideDirection = fallbackAxisSideDirection !== "none";
+			if (!specifiedFallbackPlacements && hasFallbackAxisSideDirection) fallbackPlacements.push(...getOppositeAxisPlacements(initialPlacement, flipAlignment, fallbackAxisSideDirection, rtl));
+			const placements = [initialPlacement, ...fallbackPlacements];
+			const overflow = await platform.detectOverflow(state, detectOverflowOptions);
+			const overflows = [];
+			let overflowsData = ((_middlewareData$flip = middlewareData.flip) == null ? void 0 : _middlewareData$flip.overflows) || [];
+			if (checkMainAxis) overflows.push(overflow[side]);
+			if (checkCrossAxis) {
+				const sides = getAlignmentSides(placement, rects, rtl);
+				overflows.push(overflow[sides[0]], overflow[sides[1]]);
+			}
+			overflowsData = [...overflowsData, {
+				placement,
+				overflows
+			}];
+			if (!overflows.every((side) => side <= 0)) {
+				var _middlewareData$flip2, _overflowsData$filter;
+				const nextIndex = (((_middlewareData$flip2 = middlewareData.flip) == null ? void 0 : _middlewareData$flip2.index) || 0) + 1;
+				const nextPlacement = placements[nextIndex];
+				if (nextPlacement) {
+					if (!(checkCrossAxis === "alignment" ? initialSideAxis !== getSideAxis(nextPlacement) : false) || overflowsData.every((d) => getSideAxis(d.placement) === initialSideAxis ? d.overflows[0] > 0 : true)) return {
+						data: {
+							index: nextIndex,
+							overflows: overflowsData
+						},
+						reset: { placement: nextPlacement }
+					};
+				}
+				let resetPlacement = (_overflowsData$filter = overflowsData.filter((d) => d.overflows[0] <= 0).sort((a, b) => a.overflows[1] - b.overflows[1])[0]) == null ? void 0 : _overflowsData$filter.placement;
+				if (!resetPlacement) switch (fallbackStrategy) {
+					case "bestFit": {
+						var _overflowsData$filter2;
+						const placement = (_overflowsData$filter2 = overflowsData.filter((d) => {
+							if (hasFallbackAxisSideDirection) {
+								const currentSideAxis = getSideAxis(d.placement);
+								return currentSideAxis === initialSideAxis || currentSideAxis === "y";
+							}
+							return true;
+						}).map((d) => [d.placement, d.overflows.filter((overflow) => overflow > 0).reduce((acc, overflow) => acc + overflow, 0)]).sort((a, b) => a[1] - b[1])[0]) == null ? void 0 : _overflowsData$filter2[0];
+						if (placement) resetPlacement = placement;
+						break;
+					}
+					case "initialPlacement":
+						resetPlacement = initialPlacement;
+						break;
+				}
+				if (placement !== resetPlacement) return { reset: { placement: resetPlacement } };
+			}
+			return {};
+		}
+	};
+};
+const originSides = /*#__PURE__*/ new Set(["left", "top"]);
+async function convertValueToCoords(state, options) {
+	const { placement, platform, elements } = state;
+	const rtl = await (platform.isRTL == null ? void 0 : platform.isRTL(elements.floating));
+	const side = getSide(placement);
+	const alignment = getAlignment(placement);
+	const isVertical = getSideAxis(placement) === "y";
+	const mainAxisMulti = originSides.has(side) ? -1 : 1;
+	const crossAxisMulti = rtl && isVertical ? -1 : 1;
+	const rawValue = evaluate(options, state);
+	let { mainAxis, crossAxis, alignmentAxis } = typeof rawValue === "number" ? {
+		mainAxis: rawValue,
+		crossAxis: 0,
+		alignmentAxis: null
+	} : {
+		mainAxis: rawValue.mainAxis || 0,
+		crossAxis: rawValue.crossAxis || 0,
+		alignmentAxis: rawValue.alignmentAxis
+	};
+	if (alignment && typeof alignmentAxis === "number") crossAxis = alignment === "end" ? alignmentAxis * -1 : alignmentAxis;
+	return isVertical ? {
+		x: crossAxis * crossAxisMulti,
+		y: mainAxis * mainAxisMulti
+	} : {
+		x: mainAxis * mainAxisMulti,
+		y: crossAxis * crossAxisMulti
+	};
+}
+/**
+* Modifies the placement by translating the floating element along the
+* specified axes.
+* A number (shorthand for `mainAxis` or distance), or an axes configuration
+* object may be passed.
+* @see https://floating-ui.com/docs/offset
+*/
+const offset$1 = function(options) {
+	if (options === void 0) options = 0;
+	return {
+		name: "offset",
+		options,
+		async fn(state) {
+			var _middlewareData$offse, _middlewareData$arrow;
+			const { x, y, placement, middlewareData } = state;
+			const diffCoords = await convertValueToCoords(state, options);
+			if (placement === ((_middlewareData$offse = middlewareData.offset) == null ? void 0 : _middlewareData$offse.placement) && (_middlewareData$arrow = middlewareData.arrow) != null && _middlewareData$arrow.alignmentOffset) return {};
+			return {
+				x: x + diffCoords.x,
+				y: y + diffCoords.y,
+				data: {
+					...diffCoords,
+					placement
+				}
+			};
+		}
+	};
+};
+/**
+* Optimizes the visibility of the floating element by shifting it in order to
+* keep it in view when it will overflow the clipping boundary.
+* @see https://floating-ui.com/docs/shift
+*/
+const shift$1 = function(options) {
+	if (options === void 0) options = {};
+	return {
+		name: "shift",
+		options,
+		async fn(state) {
+			const { x, y, placement, platform } = state;
+			const { mainAxis: checkMainAxis = true, crossAxis: checkCrossAxis = false, limiter = { fn: (_ref) => {
+				let { x, y } = _ref;
+				return {
+					x,
+					y
+				};
+			} }, ...detectOverflowOptions } = evaluate(options, state);
+			const coords = {
+				x,
+				y
+			};
+			const overflow = await platform.detectOverflow(state, detectOverflowOptions);
+			const crossAxis = getSideAxis(placement);
+			const mainAxis = getOppositeAxis(crossAxis);
+			let mainAxisCoord = coords[mainAxis];
+			let crossAxisCoord = coords[crossAxis];
+			const clampCoord = (axis, coord) => clamp(coord + overflow[axis === "y" ? "top" : "left"], coord, coord - overflow[axis === "y" ? "bottom" : "right"]);
+			if (checkMainAxis) mainAxisCoord = clampCoord(mainAxis, mainAxisCoord);
+			if (checkCrossAxis) crossAxisCoord = clampCoord(crossAxis, crossAxisCoord);
+			const limitedCoords = limiter.fn({
+				...state,
+				[mainAxis]: mainAxisCoord,
+				[crossAxis]: crossAxisCoord
+			});
+			return {
+				...limitedCoords,
+				data: {
+					x: limitedCoords.x - x,
+					y: limitedCoords.y - y,
+					enabled: {
+						[mainAxis]: checkMainAxis,
+						[crossAxis]: checkCrossAxis
+					}
+				}
+			};
+		}
+	};
+};
+//#endregion
+//#region node_modules/@floating-ui/utils/dist/floating-ui.utils.dom.mjs
+function hasWindow() {
+	return typeof window !== "undefined";
+}
+function getNodeName(node) {
+	if (isNode(node)) return (node.nodeName || "").toLowerCase();
+	return "#document";
+}
+function getWindow(node) {
+	var _node$ownerDocument;
+	return (node == null || (_node$ownerDocument = node.ownerDocument) == null ? void 0 : _node$ownerDocument.defaultView) || window;
+}
+function getDocumentElement(node) {
+	var _ref;
+	return (_ref = (isNode(node) ? node.ownerDocument : node.document) || window.document) == null ? void 0 : _ref.documentElement;
+}
+function isNode(value) {
+	if (!hasWindow()) return false;
+	return value instanceof Node || value instanceof getWindow(value).Node;
+}
+function isElement(value) {
+	if (!hasWindow()) return false;
+	return value instanceof Element || value instanceof getWindow(value).Element;
+}
+function isHTMLElement(value) {
+	if (!hasWindow()) return false;
+	return value instanceof HTMLElement || value instanceof getWindow(value).HTMLElement;
+}
+function isShadowRoot(value) {
+	if (!hasWindow() || typeof ShadowRoot === "undefined") return false;
+	return value instanceof ShadowRoot || value instanceof getWindow(value).ShadowRoot;
+}
+function isOverflowElement(element) {
+	const { overflow, overflowX, overflowY, display } = getComputedStyle$1(element);
+	return /auto|scroll|overlay|hidden|clip/.test(overflow + overflowY + overflowX) && display !== "inline" && display !== "contents";
+}
+function isTableElement(element) {
+	return /^(table|td|th)$/.test(getNodeName(element));
+}
+function isTopLayer(element) {
+	try {
+		if (element.matches(":popover-open")) return true;
+	} catch (_e) {}
+	try {
+		return element.matches(":modal");
+	} catch (_e) {
+		return false;
+	}
+}
+const willChangeRe = /transform|translate|scale|rotate|perspective|filter/;
+const containRe = /paint|layout|strict|content/;
+const isNotNone = (value) => !!value && value !== "none";
+let isWebKitValue;
+function isContainingBlock(elementOrCss) {
+	const css = isElement(elementOrCss) ? getComputedStyle$1(elementOrCss) : elementOrCss;
+	return isNotNone(css.transform) || isNotNone(css.translate) || isNotNone(css.scale) || isNotNone(css.rotate) || isNotNone(css.perspective) || !isWebKit() && (isNotNone(css.backdropFilter) || isNotNone(css.filter)) || willChangeRe.test(css.willChange || "") || containRe.test(css.contain || "");
+}
+function getContainingBlock(element) {
+	let currentNode = getParentNode(element);
+	while (isHTMLElement(currentNode) && !isLastTraversableNode(currentNode)) {
+		if (isContainingBlock(currentNode)) return currentNode;
+		else if (isTopLayer(currentNode)) return null;
+		currentNode = getParentNode(currentNode);
+	}
+	return null;
+}
+function isWebKit() {
+	if (isWebKitValue == null) isWebKitValue = typeof CSS !== "undefined" && CSS.supports && CSS.supports("-webkit-backdrop-filter", "none");
+	return isWebKitValue;
+}
+function isLastTraversableNode(node) {
+	return /^(html|body|#document)$/.test(getNodeName(node));
+}
+function getComputedStyle$1(element) {
+	return getWindow(element).getComputedStyle(element);
+}
+function getNodeScroll(element) {
+	if (isElement(element)) return {
+		scrollLeft: element.scrollLeft,
+		scrollTop: element.scrollTop
+	};
+	return {
+		scrollLeft: element.scrollX,
+		scrollTop: element.scrollY
+	};
+}
+function getParentNode(node) {
+	if (getNodeName(node) === "html") return node;
+	const result = node.assignedSlot || node.parentNode || isShadowRoot(node) && node.host || getDocumentElement(node);
+	return isShadowRoot(result) ? result.host : result;
+}
+function getNearestOverflowAncestor(node) {
+	const parentNode = getParentNode(node);
+	if (isLastTraversableNode(parentNode)) return (node.ownerDocument || node).body;
+	if (isHTMLElement(parentNode) && isOverflowElement(parentNode)) return parentNode;
+	return getNearestOverflowAncestor(parentNode);
+}
+function getOverflowAncestors(node, list, traverseIframes) {
+	var _node$ownerDocument2;
+	if (list === void 0) list = [];
+	if (traverseIframes === void 0) traverseIframes = true;
+	const scrollableAncestor = getNearestOverflowAncestor(node);
+	const isBody = scrollableAncestor === ((_node$ownerDocument2 = node.ownerDocument) == null ? void 0 : _node$ownerDocument2.body);
+	const win = getWindow(scrollableAncestor);
+	if (isBody) {
+		const frameElement = getFrameElement(win);
+		return list.concat(win, win.visualViewport || [], isOverflowElement(scrollableAncestor) ? scrollableAncestor : [], frameElement && traverseIframes ? getOverflowAncestors(frameElement) : []);
+	} else return list.concat(scrollableAncestor, getOverflowAncestors(scrollableAncestor, [], traverseIframes));
+}
+function getFrameElement(win) {
+	return win.parent && Object.getPrototypeOf(win.parent) ? win.frameElement : null;
+}
+//#endregion
+//#region node_modules/@floating-ui/dom/dist/floating-ui.dom.mjs
+function getCssDimensions(element) {
+	const css = getComputedStyle$1(element);
+	let width = parseFloat(css.width) || 0;
+	let height = parseFloat(css.height) || 0;
+	const hasOffset = isHTMLElement(element);
+	const offsetWidth = hasOffset ? element.offsetWidth : width;
+	const offsetHeight = hasOffset ? element.offsetHeight : height;
+	const shouldFallback = round(width) !== offsetWidth || round(height) !== offsetHeight;
+	if (shouldFallback) {
+		width = offsetWidth;
+		height = offsetHeight;
+	}
+	return {
+		width,
+		height,
+		$: shouldFallback
+	};
+}
+function unwrapElement(element) {
+	return !isElement(element) ? element.contextElement : element;
+}
+function getScale(element) {
+	const domElement = unwrapElement(element);
+	if (!isHTMLElement(domElement)) return createCoords(1);
+	const rect = domElement.getBoundingClientRect();
+	const { width, height, $ } = getCssDimensions(domElement);
+	let x = ($ ? round(rect.width) : rect.width) / width;
+	let y = ($ ? round(rect.height) : rect.height) / height;
+	if (!x || !Number.isFinite(x)) x = 1;
+	if (!y || !Number.isFinite(y)) y = 1;
+	return {
+		x,
+		y
+	};
+}
+const noOffsets = /*#__PURE__*/ createCoords(0);
+function getVisualOffsets(element) {
+	const win = getWindow(element);
+	if (!isWebKit() || !win.visualViewport) return noOffsets;
+	return {
+		x: win.visualViewport.offsetLeft,
+		y: win.visualViewport.offsetTop
+	};
+}
+function shouldAddVisualOffsets(element, isFixed, floatingOffsetParent) {
+	if (isFixed === void 0) isFixed = false;
+	if (!floatingOffsetParent || isFixed && floatingOffsetParent !== getWindow(element)) return false;
+	return isFixed;
+}
+function getBoundingClientRect(element, includeScale, isFixedStrategy, offsetParent) {
+	if (includeScale === void 0) includeScale = false;
+	if (isFixedStrategy === void 0) isFixedStrategy = false;
+	const clientRect = element.getBoundingClientRect();
+	const domElement = unwrapElement(element);
+	let scale = createCoords(1);
+	if (includeScale) if (offsetParent) {
+		if (isElement(offsetParent)) scale = getScale(offsetParent);
+	} else scale = getScale(element);
+	const visualOffsets = shouldAddVisualOffsets(domElement, isFixedStrategy, offsetParent) ? getVisualOffsets(domElement) : createCoords(0);
+	let x = (clientRect.left + visualOffsets.x) / scale.x;
+	let y = (clientRect.top + visualOffsets.y) / scale.y;
+	let width = clientRect.width / scale.x;
+	let height = clientRect.height / scale.y;
+	if (domElement) {
+		const win = getWindow(domElement);
+		const offsetWin = offsetParent && isElement(offsetParent) ? getWindow(offsetParent) : offsetParent;
+		let currentWin = win;
+		let currentIFrame = getFrameElement(currentWin);
+		while (currentIFrame && offsetParent && offsetWin !== currentWin) {
+			const iframeScale = getScale(currentIFrame);
+			const iframeRect = currentIFrame.getBoundingClientRect();
+			const css = getComputedStyle$1(currentIFrame);
+			const left = iframeRect.left + (currentIFrame.clientLeft + parseFloat(css.paddingLeft)) * iframeScale.x;
+			const top = iframeRect.top + (currentIFrame.clientTop + parseFloat(css.paddingTop)) * iframeScale.y;
+			x *= iframeScale.x;
+			y *= iframeScale.y;
+			width *= iframeScale.x;
+			height *= iframeScale.y;
+			x += left;
+			y += top;
+			currentWin = getWindow(currentIFrame);
+			currentIFrame = getFrameElement(currentWin);
+		}
+	}
+	return rectToClientRect({
+		width,
+		height,
+		x,
+		y
+	});
+}
+function getWindowScrollBarX(element, rect) {
+	const leftScroll = getNodeScroll(element).scrollLeft;
+	if (!rect) return getBoundingClientRect(getDocumentElement(element)).left + leftScroll;
+	return rect.left + leftScroll;
+}
+function getHTMLOffset(documentElement, scroll) {
+	const htmlRect = documentElement.getBoundingClientRect();
+	return {
+		x: htmlRect.left + scroll.scrollLeft - getWindowScrollBarX(documentElement, htmlRect),
+		y: htmlRect.top + scroll.scrollTop
+	};
+}
+function convertOffsetParentRelativeRectToViewportRelativeRect(_ref) {
+	let { elements, rect, offsetParent, strategy } = _ref;
+	const isFixed = strategy === "fixed";
+	const documentElement = getDocumentElement(offsetParent);
+	const topLayer = elements ? isTopLayer(elements.floating) : false;
+	if (offsetParent === documentElement || topLayer && isFixed) return rect;
+	let scroll = {
+		scrollLeft: 0,
+		scrollTop: 0
+	};
+	let scale = createCoords(1);
+	const offsets = createCoords(0);
+	const isOffsetParentAnElement = isHTMLElement(offsetParent);
+	if (isOffsetParentAnElement || !isOffsetParentAnElement && !isFixed) {
+		if (getNodeName(offsetParent) !== "body" || isOverflowElement(documentElement)) scroll = getNodeScroll(offsetParent);
+		if (isOffsetParentAnElement) {
+			const offsetRect = getBoundingClientRect(offsetParent);
+			scale = getScale(offsetParent);
+			offsets.x = offsetRect.x + offsetParent.clientLeft;
+			offsets.y = offsetRect.y + offsetParent.clientTop;
+		}
+	}
+	const htmlOffset = documentElement && !isOffsetParentAnElement && !isFixed ? getHTMLOffset(documentElement, scroll) : createCoords(0);
+	return {
+		width: rect.width * scale.x,
+		height: rect.height * scale.y,
+		x: rect.x * scale.x - scroll.scrollLeft * scale.x + offsets.x + htmlOffset.x,
+		y: rect.y * scale.y - scroll.scrollTop * scale.y + offsets.y + htmlOffset.y
+	};
+}
+function getClientRects(element) {
+	return Array.from(element.getClientRects());
+}
+function getDocumentRect(element) {
+	const html = getDocumentElement(element);
+	const scroll = getNodeScroll(element);
+	const body = element.ownerDocument.body;
+	const width = max(html.scrollWidth, html.clientWidth, body.scrollWidth, body.clientWidth);
+	const height = max(html.scrollHeight, html.clientHeight, body.scrollHeight, body.clientHeight);
+	let x = -scroll.scrollLeft + getWindowScrollBarX(element);
+	const y = -scroll.scrollTop;
+	if (getComputedStyle$1(body).direction === "rtl") x += max(html.clientWidth, body.clientWidth) - width;
+	return {
+		width,
+		height,
+		x,
+		y
+	};
+}
+const SCROLLBAR_MAX = 25;
+function getViewportRect(element, strategy) {
+	const win = getWindow(element);
+	const html = getDocumentElement(element);
+	const visualViewport = win.visualViewport;
+	let width = html.clientWidth;
+	let height = html.clientHeight;
+	let x = 0;
+	let y = 0;
+	if (visualViewport) {
+		width = visualViewport.width;
+		height = visualViewport.height;
+		const visualViewportBased = isWebKit();
+		if (!visualViewportBased || visualViewportBased && strategy === "fixed") {
+			x = visualViewport.offsetLeft;
+			y = visualViewport.offsetTop;
+		}
+	}
+	const windowScrollbarX = getWindowScrollBarX(html);
+	if (windowScrollbarX <= 0) {
+		const doc = html.ownerDocument;
+		const body = doc.body;
+		const bodyStyles = getComputedStyle(body);
+		const bodyMarginInline = doc.compatMode === "CSS1Compat" ? parseFloat(bodyStyles.marginLeft) + parseFloat(bodyStyles.marginRight) || 0 : 0;
+		const clippingStableScrollbarWidth = Math.abs(html.clientWidth - body.clientWidth - bodyMarginInline);
+		if (clippingStableScrollbarWidth <= SCROLLBAR_MAX) width -= clippingStableScrollbarWidth;
+	} else if (windowScrollbarX <= SCROLLBAR_MAX) width += windowScrollbarX;
+	return {
+		width,
+		height,
+		x,
+		y
+	};
+}
+function getInnerBoundingClientRect(element, strategy) {
+	const clientRect = getBoundingClientRect(element, true, strategy === "fixed");
+	const top = clientRect.top + element.clientTop;
+	const left = clientRect.left + element.clientLeft;
+	const scale = isHTMLElement(element) ? getScale(element) : createCoords(1);
+	return {
+		width: element.clientWidth * scale.x,
+		height: element.clientHeight * scale.y,
+		x: left * scale.x,
+		y: top * scale.y
+	};
+}
+function getClientRectFromClippingAncestor(element, clippingAncestor, strategy) {
+	let rect;
+	if (clippingAncestor === "viewport") rect = getViewportRect(element, strategy);
+	else if (clippingAncestor === "document") rect = getDocumentRect(getDocumentElement(element));
+	else if (isElement(clippingAncestor)) rect = getInnerBoundingClientRect(clippingAncestor, strategy);
+	else {
+		const visualOffsets = getVisualOffsets(element);
+		rect = {
+			x: clippingAncestor.x - visualOffsets.x,
+			y: clippingAncestor.y - visualOffsets.y,
+			width: clippingAncestor.width,
+			height: clippingAncestor.height
+		};
+	}
+	return rectToClientRect(rect);
+}
+function hasFixedPositionAncestor(element, stopNode) {
+	const parentNode = getParentNode(element);
+	if (parentNode === stopNode || !isElement(parentNode) || isLastTraversableNode(parentNode)) return false;
+	return getComputedStyle$1(parentNode).position === "fixed" || hasFixedPositionAncestor(parentNode, stopNode);
+}
+function getClippingElementAncestors(element, cache) {
+	const cachedResult = cache.get(element);
+	if (cachedResult) return cachedResult;
+	let result = getOverflowAncestors(element, [], false).filter((el) => isElement(el) && getNodeName(el) !== "body");
+	let currentContainingBlockComputedStyle = null;
+	const elementIsFixed = getComputedStyle$1(element).position === "fixed";
+	let currentNode = elementIsFixed ? getParentNode(element) : element;
+	while (isElement(currentNode) && !isLastTraversableNode(currentNode)) {
+		const computedStyle = getComputedStyle$1(currentNode);
+		const currentNodeIsContaining = isContainingBlock(currentNode);
+		if (!currentNodeIsContaining && computedStyle.position === "fixed") currentContainingBlockComputedStyle = null;
+		if (elementIsFixed ? !currentNodeIsContaining && !currentContainingBlockComputedStyle : !currentNodeIsContaining && computedStyle.position === "static" && !!currentContainingBlockComputedStyle && (currentContainingBlockComputedStyle.position === "absolute" || currentContainingBlockComputedStyle.position === "fixed") || isOverflowElement(currentNode) && !currentNodeIsContaining && hasFixedPositionAncestor(element, currentNode)) result = result.filter((ancestor) => ancestor !== currentNode);
+		else currentContainingBlockComputedStyle = computedStyle;
+		currentNode = getParentNode(currentNode);
+	}
+	cache.set(element, result);
+	return result;
+}
+function getClippingRect(_ref) {
+	let { element, boundary, rootBoundary, strategy } = _ref;
+	const clippingAncestors = [...boundary === "clippingAncestors" ? isTopLayer(element) ? [] : getClippingElementAncestors(element, this._c) : [].concat(boundary), rootBoundary];
+	const firstRect = getClientRectFromClippingAncestor(element, clippingAncestors[0], strategy);
+	let top = firstRect.top;
+	let right = firstRect.right;
+	let bottom = firstRect.bottom;
+	let left = firstRect.left;
+	for (let i = 1; i < clippingAncestors.length; i++) {
+		const rect = getClientRectFromClippingAncestor(element, clippingAncestors[i], strategy);
+		top = max(rect.top, top);
+		right = min(rect.right, right);
+		bottom = min(rect.bottom, bottom);
+		left = max(rect.left, left);
+	}
+	return {
+		width: right - left,
+		height: bottom - top,
+		x: left,
+		y: top
+	};
+}
+function getDimensions(element) {
+	const { width, height } = getCssDimensions(element);
+	return {
+		width,
+		height
+	};
+}
+function getRectRelativeToOffsetParent(element, offsetParent, strategy) {
+	const isOffsetParentAnElement = isHTMLElement(offsetParent);
+	const documentElement = getDocumentElement(offsetParent);
+	const isFixed = strategy === "fixed";
+	const rect = getBoundingClientRect(element, true, isFixed, offsetParent);
+	let scroll = {
+		scrollLeft: 0,
+		scrollTop: 0
+	};
+	const offsets = createCoords(0);
+	function setLeftRTLScrollbarOffset() {
+		offsets.x = getWindowScrollBarX(documentElement);
+	}
+	if (isOffsetParentAnElement || !isOffsetParentAnElement && !isFixed) {
+		if (getNodeName(offsetParent) !== "body" || isOverflowElement(documentElement)) scroll = getNodeScroll(offsetParent);
+		if (isOffsetParentAnElement) {
+			const offsetRect = getBoundingClientRect(offsetParent, true, isFixed, offsetParent);
+			offsets.x = offsetRect.x + offsetParent.clientLeft;
+			offsets.y = offsetRect.y + offsetParent.clientTop;
+		} else if (documentElement) setLeftRTLScrollbarOffset();
+	}
+	if (isFixed && !isOffsetParentAnElement && documentElement) setLeftRTLScrollbarOffset();
+	const htmlOffset = documentElement && !isOffsetParentAnElement && !isFixed ? getHTMLOffset(documentElement, scroll) : createCoords(0);
+	return {
+		x: rect.left + scroll.scrollLeft - offsets.x - htmlOffset.x,
+		y: rect.top + scroll.scrollTop - offsets.y - htmlOffset.y,
+		width: rect.width,
+		height: rect.height
+	};
+}
+function isStaticPositioned(element) {
+	return getComputedStyle$1(element).position === "static";
+}
+function getTrueOffsetParent(element, polyfill) {
+	if (!isHTMLElement(element) || getComputedStyle$1(element).position === "fixed") return null;
+	if (polyfill) return polyfill(element);
+	let rawOffsetParent = element.offsetParent;
+	if (getDocumentElement(element) === rawOffsetParent) rawOffsetParent = rawOffsetParent.ownerDocument.body;
+	return rawOffsetParent;
+}
+function getOffsetParent(element, polyfill) {
+	const win = getWindow(element);
+	if (isTopLayer(element)) return win;
+	if (!isHTMLElement(element)) {
+		let svgOffsetParent = getParentNode(element);
+		while (svgOffsetParent && !isLastTraversableNode(svgOffsetParent)) {
+			if (isElement(svgOffsetParent) && !isStaticPositioned(svgOffsetParent)) return svgOffsetParent;
+			svgOffsetParent = getParentNode(svgOffsetParent);
+		}
+		return win;
+	}
+	let offsetParent = getTrueOffsetParent(element, polyfill);
+	while (offsetParent && isTableElement(offsetParent) && isStaticPositioned(offsetParent)) offsetParent = getTrueOffsetParent(offsetParent, polyfill);
+	if (offsetParent && isLastTraversableNode(offsetParent) && isStaticPositioned(offsetParent) && !isContainingBlock(offsetParent)) return win;
+	return offsetParent || getContainingBlock(element) || win;
+}
+const getElementRects = async function(data) {
+	const getOffsetParentFn = this.getOffsetParent || getOffsetParent;
+	const getDimensionsFn = this.getDimensions;
+	const floatingDimensions = await getDimensionsFn(data.floating);
+	return {
+		reference: getRectRelativeToOffsetParent(data.reference, await getOffsetParentFn(data.floating), data.strategy),
+		floating: {
+			x: 0,
+			y: 0,
+			width: floatingDimensions.width,
+			height: floatingDimensions.height
+		}
+	};
+};
+function isRTL(element) {
+	return getComputedStyle$1(element).direction === "rtl";
+}
+const platform = {
+	convertOffsetParentRelativeRectToViewportRelativeRect,
+	getDocumentElement,
+	getClippingRect,
+	getOffsetParent,
+	getElementRects,
+	getClientRects,
+	getDimensions,
+	getScale,
+	isElement,
+	isRTL
+};
+function rectsAreEqual(a, b) {
+	return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+}
+function observeMove(element, onMove) {
+	let io = null;
+	let timeoutId;
+	const root = getDocumentElement(element);
+	function cleanup() {
+		var _io;
+		clearTimeout(timeoutId);
+		(_io = io) == null || _io.disconnect();
+		io = null;
+	}
+	function refresh(skip, threshold) {
+		if (skip === void 0) skip = false;
+		if (threshold === void 0) threshold = 1;
+		cleanup();
+		const elementRectForRootMargin = element.getBoundingClientRect();
+		const { left, top, width, height } = elementRectForRootMargin;
+		if (!skip) onMove();
+		if (!width || !height) return;
+		const insetTop = floor(top);
+		const insetRight = floor(root.clientWidth - (left + width));
+		const insetBottom = floor(root.clientHeight - (top + height));
+		const insetLeft = floor(left);
+		const options = {
+			rootMargin: -insetTop + "px " + -insetRight + "px " + -insetBottom + "px " + -insetLeft + "px",
+			threshold: max(0, min(1, threshold)) || 1
+		};
+		let isFirstUpdate = true;
+		function handleObserve(entries) {
+			const ratio = entries[0].intersectionRatio;
+			if (ratio !== threshold) {
+				if (!isFirstUpdate) return refresh();
+				if (!ratio) timeoutId = setTimeout(() => {
+					refresh(false, 1e-7);
+				}, 1e3);
+				else refresh(false, ratio);
+			}
+			if (ratio === 1 && !rectsAreEqual(elementRectForRootMargin, element.getBoundingClientRect())) refresh();
+			isFirstUpdate = false;
+		}
+		try {
+			io = new IntersectionObserver(handleObserve, {
+				...options,
+				root: root.ownerDocument
+			});
+		} catch (_e) {
+			io = new IntersectionObserver(handleObserve, options);
+		}
+		io.observe(element);
+	}
+	refresh(true);
+	return cleanup;
+}
+/**
+* Automatically updates the position of the floating element when necessary.
+* Should only be called when the floating element is mounted on the DOM or
+* visible on the screen.
+* @returns cleanup function that should be invoked when the floating element is
+* removed from the DOM or hidden from the screen.
+* @see https://floating-ui.com/docs/autoUpdate
+*/
+function autoUpdate(reference, floating, update, options) {
+	if (options === void 0) options = {};
+	const { ancestorScroll = true, ancestorResize = true, elementResize = typeof ResizeObserver === "function", layoutShift = typeof IntersectionObserver === "function", animationFrame = false } = options;
+	const referenceEl = unwrapElement(reference);
+	const ancestors = ancestorScroll || ancestorResize ? [...referenceEl ? getOverflowAncestors(referenceEl) : [], ...floating ? getOverflowAncestors(floating) : []] : [];
+	ancestors.forEach((ancestor) => {
+		ancestorScroll && ancestor.addEventListener("scroll", update, { passive: true });
+		ancestorResize && ancestor.addEventListener("resize", update);
+	});
+	const cleanupIo = referenceEl && layoutShift ? observeMove(referenceEl, update) : null;
+	let reobserveFrame = -1;
+	let resizeObserver = null;
+	if (elementResize) {
+		resizeObserver = new ResizeObserver((_ref) => {
+			let [firstEntry] = _ref;
+			if (firstEntry && firstEntry.target === referenceEl && resizeObserver && floating) {
+				resizeObserver.unobserve(floating);
+				cancelAnimationFrame(reobserveFrame);
+				reobserveFrame = requestAnimationFrame(() => {
+					var _resizeObserver;
+					(_resizeObserver = resizeObserver) == null || _resizeObserver.observe(floating);
+				});
+			}
+			update();
+		});
+		if (referenceEl && !animationFrame) resizeObserver.observe(referenceEl);
+		if (floating) resizeObserver.observe(floating);
+	}
+	let frameId;
+	let prevRefRect = animationFrame ? getBoundingClientRect(reference) : null;
+	if (animationFrame) frameLoop();
+	function frameLoop() {
+		const nextRefRect = getBoundingClientRect(reference);
+		if (prevRefRect && !rectsAreEqual(prevRefRect, nextRefRect)) update();
+		prevRefRect = nextRefRect;
+		frameId = requestAnimationFrame(frameLoop);
+	}
+	update();
+	return () => {
+		var _resizeObserver2;
+		ancestors.forEach((ancestor) => {
+			ancestorScroll && ancestor.removeEventListener("scroll", update);
+			ancestorResize && ancestor.removeEventListener("resize", update);
+		});
+		cleanupIo?.();
+		(_resizeObserver2 = resizeObserver) == null || _resizeObserver2.disconnect();
+		resizeObserver = null;
+		if (animationFrame) cancelAnimationFrame(frameId);
+	};
+}
+/**
+* Modifies the placement by translating the floating element along the
+* specified axes.
+* A number (shorthand for `mainAxis` or distance), or an axes configuration
+* object may be passed.
+* @see https://floating-ui.com/docs/offset
+*/
+const offset = offset$1;
+/**
+* Optimizes the visibility of the floating element by shifting it in order to
+* keep it in view when it will overflow the clipping boundary.
+* @see https://floating-ui.com/docs/shift
+*/
+const shift = shift$1;
+/**
+* Optimizes the visibility of the floating element by flipping the `placement`
+* in order to keep it in view when the preferred placement(s) will overflow the
+* clipping boundary. Alternative to `autoPlacement`.
+* @see https://floating-ui.com/docs/flip
+*/
+const flip = flip$1;
+/**
+* Provides data to position an inner element of the floating element so that it
+* appears centered to the reference element.
+* @see https://floating-ui.com/docs/arrow
+*/
+const arrow = arrow$1;
+/**
+* Computes the `x` and `y` coordinates that will place the floating element
+* next to a given reference element.
+*/
+const computePosition = (reference, floating, options) => {
+	const cache = /* @__PURE__ */ new Map();
+	const mergedOptions = {
+		platform,
+		...options
+	};
+	const platformWithCache = {
+		...mergedOptions.platform,
+		_c: cache
+	};
+	return computePosition$1(reference, floating, {
+		...mergedOptions,
+		platform: platformWithCache
+	});
+};
+//#endregion
 //#region js/src/util/floating-ui.ts
 /**
 * Breakpoints for responsive placement (matches SCSS $breakpoints)
@@ -1462,7 +2594,7 @@ const SELECTOR_VISIBLE_ITEMS$1 = ".menu-item:not(.disabled):not(:disabled)";
 const DEFAULT_PLACEMENT = "bottom-start";
 const SUBMENU_PLACEMENT = "end-start";
 const resolveLogicalPlacement = (placement) => {
-	if (isRTL()) return placement.replace(/^start(?=-|$)/, "right").replace(/^end(?=-|$)/, "left");
+	if (isRTL$1()) return placement.replace(/^start(?=-|$)/, "right").replace(/^end(?=-|$)/, "left");
 	return placement.replace(/^start(?=-|$)/, "left").replace(/^end(?=-|$)/, "right");
 };
 const triangleSign = (p1, p2, p3) => (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
@@ -1592,7 +2724,7 @@ var Menu = class Menu extends BaseComponent {
 	}
 	_getConfig(config) {
 		config = super._getConfig(config);
-		if (typeof config.reference === "object" && !isElement(config.reference) && typeof config.reference.getBoundingClientRect !== "function") throw new TypeError(`${NAME$17.toUpperCase()}: Option "reference" provided type "object" without a required "getBoundingClientRect" method.`);
+		if (typeof config.reference === "object" && !isElement$1(config.reference) && typeof config.reference.getBoundingClientRect !== "function") throw new TypeError(`${NAME$17.toUpperCase()}: Option "reference" provided type "object" without a required "getBoundingClientRect" method.`);
 		return config;
 	}
 	_createFloating() {
@@ -1602,7 +2734,7 @@ var Menu = class Menu extends BaseComponent {
 		}
 		let referenceElement = this._element;
 		if (this._config.reference === "parent") referenceElement = this._parent;
-		else if (isElement(this._config.reference)) referenceElement = getElement(this._config.reference);
+		else if (isElement$1(this._config.reference)) referenceElement = getElement(this._config.reference);
 		else if (typeof this._config.reference === "object") referenceElement = this._config.reference;
 		this._updateFloatingPosition(referenceElement);
 		this._floatingCleanup = autoUpdate(referenceElement, this._menu, () => this._updateFloatingPosition(referenceElement));
@@ -1610,7 +2742,7 @@ var Menu = class Menu extends BaseComponent {
 	async _updateFloatingPosition(referenceElement = null) {
 		if (!this._menu) return;
 		if (!referenceElement) if (this._config.reference === "parent") referenceElement = this._parent;
-		else if (isElement(this._config.reference)) referenceElement = getElement(this._config.reference);
+		else if (isElement$1(this._config.reference)) referenceElement = getElement(this._config.reference);
 		else if (typeof this._config.reference === "object") referenceElement = this._config.reference;
 		else referenceElement = this._element;
 		const placement = this._getPlacement();
@@ -1956,7 +3088,7 @@ var Menu = class Menu extends BaseComponent {
 			x: this._hoverIntentData.x,
 			y: this._hoverIntentData.y
 		};
-		const targetX = isRTL() ? submenuRect.right : submenuRect.left;
+		const targetX = isRTL$1() ? submenuRect.right : submenuRect.left;
 		const topCorner = {
 			x: targetX,
 			y: submenuRect.top
@@ -1993,7 +3125,7 @@ var Menu = class Menu extends BaseComponent {
 	}
 	_handleSubmenuKeydown(event) {
 		const { key, target } = event;
-		const isRtl = isRTL();
+		const isRtl = isRTL$1();
 		const enterKey = isRtl ? ARROW_LEFT_KEY$1 : ARROW_RIGHT_KEY$1;
 		const exitKey = isRtl ? ARROW_RIGHT_KEY$1 : ARROW_LEFT_KEY$1;
 		const submenuWrapper = target.closest(SELECTOR_SUBMENU);
@@ -2414,6 +3546,1430 @@ EventHandler.on(document, "DOMContentLoaded", () => {
 	for (const toggle of SelectorEngine.find(SELECTOR_DATA_TOGGLE$7)) Combobox.getOrCreateInstance(toggle);
 });
 //#endregion
+//#region node_modules/vanilla-calendar-pro/index.mjs
+/*! name: vanilla-calendar-pro v3.4.0 | url: https://github.com/uvarov-frontend/vanilla-calendar-pro */
+var e = (e) => /* @__PURE__ */ new Date(`${e}T00:00:00`);
+var t = (e) => `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, "0")}-${String(e.getDate()).padStart(2, "0")}`;
+var n = (n, a) => n.reduce((n, l) => {
+	if (l instanceof Date || "number" == typeof l) {
+		let e = l instanceof Date ? l : new Date(l);
+		n.push(t(e));
+	} else l.match(/^(\d{4}-\d{2}-\d{2})$/g) ? n.push(l) : l.replace(/(\d{4}-\d{2}-\d{2}).*?(\d{4}-\d{2}-\d{2})/g, (l, o, r) => {
+		var i;
+		let s = `${o}:${r}`, c = a ? a.start.getTime() : -Infinity, d = null == a || null == (i = a.cursors) ? void 0 : i.get(s), u = void 0 !== d && d <= c ? new Date(d) : e(o), m = e(r).setHours(23, 59, 59, 999);
+		if (a) {
+			if (m < c) return l;
+			m = Math.min(m, new Date(a.end).setHours(23, 59, 59, 999));
+		}
+		let p = !1;
+		for (let e = u.getTime(); e <= m; e = u.setDate(u.getDate() + 1)) (!a || e >= c) && (null != a && a.cursors && !p && (a.cursors.set(s, e), p = !0), n.push(t(u)));
+		return l;
+	});
+	return n;
+}, []);
+var a = (e, t) => {
+	if (t && t.values.length === e.length) {
+		let n = 0;
+		for (; n < e.length && t.values[n] === e[n];) n++;
+		if (n === e.length) return t;
+	}
+	return {
+		values: e.slice(),
+		set: new Set(e)
+	};
+};
+var l = /* @__PURE__ */ new WeakMap();
+var o = (e) => {
+	var t;
+	let o = null != (t = e.selectedHolidays) && t[0] ? e.selectedHolidays : [], r = JSON.stringify(o.map((e) => e instanceof Date ? e.getTime() : e)), i = l.get(e);
+	l.set(e, {
+		holidayKey: r,
+		holidays: (null == i ? void 0 : i.holidayKey) === r ? i.holidays : new Set(n(o)),
+		selected: a(e.context.selectedDates, null == i ? void 0 : i.selected),
+		disabled: a(e.context.disableDates, null == i ? void 0 : i.disabled),
+		enabled: a(e.context.enableDates, null == i ? void 0 : i.enabled),
+		min: Date.parse(`${e.context.displayDateMin}T00:00:00`),
+		max: Date.parse(`${e.context.displayDateMax}T00:00:00`),
+		first: Date.parse(`${e.context.selectedDates[0]}T00:00:00`),
+		last: Date.parse(`${e.context.selectedDates[e.context.selectedDates.length - 1]}T00:00:00`)
+	});
+};
+var r = (e) => l.get(e);
+var i = [
+	"motion",
+	"time",
+	"annotations",
+	"weeks",
+	"months"
+];
+var s = /* @__PURE__ */ new WeakMap();
+var c = {};
+var d = /* @__PURE__ */ Object.freeze([]);
+var u = (e) => {
+	var t;
+	return null == (t = s.get(e)) ? c : t;
+};
+var m = (e, t = e) => {
+	if (t.extensions && t.extensions !== e.extensions && (new Set(t.extensions).size !== e.extensions.length || t.extensions.some((t) => !e.extensions.includes(t)))) throw Error("Calendar extensions are fixed at construction. Create a new Calendar to change them.");
+	let n = u(e), a = (e, t, a) => {
+		if (e && !n[t]) throw Error(`The "${a}" option requires ${t}. Import { ${t} } from 'vanilla-calendar-pro' and add it to extensions: [${t}].`);
+	};
+	a(t.animation || t.enableSwipe, "motion", t.animation ? "animation" : "enableSwipe"), a(t.selectionTimeMode, "time", "selectionTimeMode"), a(t.popups && Object.keys(t.popups).length || t.onCreateDateRangeTooltip, "annotations", t.onCreateDateRangeTooltip ? "onCreateDateRangeTooltip" : "popups"), a("multiple" === t.type, "months", "type"), a("week" === t.type || t.enableCollapse || t.enableWeekNumbers || t.onClickWeekDay, "weeks", "week" === t.type ? "type" : t.enableCollapse ? "enableCollapse" : t.enableWeekNumbers ? "enableWeekNumbers" : "onClickWeekDay");
+};
+var p = (e, t, n) => {
+	var a;
+	return null == (a = u(e).annotations) ? void 0 : a.tooltip(e, t, n);
+};
+var h = /* @__PURE__ */ new WeakMap();
+var v = (e) => {
+	let t = h.get(e);
+	return t || (t = {
+		lastDateEl: null,
+		isHovering: !1,
+		rangeMin: void 0,
+		rangeMax: void 0,
+		tooltipEl: null,
+		timeoutId: null,
+		frameId: null
+	}, h.set(e, t)), t;
+};
+var y = (e) => {
+	e.context.mainElement.querySelectorAll("[data-vc-date-hover]").forEach((e) => e.removeAttribute("data-vc-date-hover"));
+};
+var g = (e, t, n) => {
+	e.context[t] = n;
+};
+var f = (e, t) => void 0 === t || ("function" == typeof t ? t(e) : t);
+var x = (e) => f(e, e.enableDateToggle);
+var b = (e) => {
+	if (e.length < 3 || e.includes(void 0)) return e.sort((e, t) => +new Date(e) - new Date(t));
+	let t = e.map((e) => ({
+		date: e,
+		time: +new Date(e)
+	}));
+	return t.sort((e, t) => e.time - t.time), t.forEach((t, n) => e[n] = t.date), e;
+};
+var D = (e) => {
+	var t;
+	let n = h.get(e);
+	n && (null == (t = n.cleanup) || t.call(n), n.cleanup = void 0, null !== n.timeoutId && clearTimeout(n.timeoutId), null !== n.frameId && cancelAnimationFrame(n.frameId), n.lastDateEl = null, n.tooltipEl = null, n.timeoutId = null, n.frameId = null, h.delete(e));
+};
+var M = (a, l, o = !0) => {
+	let r = v(a);
+	if (r.lastDateEl = l, y(a), !r.cleanup) {
+		let n = a.context.mainElement, l = ((n) => (a) => {
+			if (!n.context.selectedDates[0] || 1 !== n.context.selectedDates.length && !n.onCreateDateRangeTooltip) return;
+			let l = v(n);
+			if (l.isHovering) return;
+			let o = a.target;
+			l.isHovering = !0, l.frameId = requestAnimationFrame(() => {
+				var a;
+				l.frameId = null, l.isHovering = !1, !n.context.isDestroyed && n.context.mainElement.contains(o) && (1 === n.context.selectedDates.length ? ((n, a) => {
+					var l;
+					let o = v(n);
+					if (n.context.mainElement.hasAttribute("data-vc-dragging") || !a || null == n || null == (l = n.context) || !l.selectedDates[0]) return;
+					if (!a.closest("[data-vc=\"dates\"]")) return o.lastDateEl = null, p(n, o.tooltipEl, null), void y(n);
+					let r = a.closest("[data-vc-date]");
+					if (!r || o.lastDateEl === r) return;
+					o.lastDateEl = r, p(n, o.tooltipEl, r), y(n);
+					let i = r.dataset.vcDate, s = e(n.context.selectedDates[0]), c = e(i), [d, u] = s < c ? [s, c] : [c, s], [m, h] = s < c ? [n.context.selectedDates[0], i] : [i, n.context.selectedDates[0]], g = new Set(n.context.disableDates), f = new Date(d);
+					for (; f <= u && g.has(t(f));) f.setDate(f.getDate() + 1);
+					f <= u && n.context.mainElement.querySelectorAll("[data-vc-date]").forEach((t) => {
+						let n = t.dataset.vcDate;
+						if (n === m || n === h) t.dataset.vcDateHover = m === h ? "first-and-last" : n === m ? "first" : "last";
+						else {
+							let a = e(n);
+							a >= d && a <= u && !g.has(n) && (t.dataset.vcDateHover = "");
+						}
+					});
+				})(n, o) : n.context.selectedDates[0] && n.onCreateDateRangeTooltip && (null == (a = u(n).annotations) || a.hover(n, o)));
+			});
+		})(a), o = () => ((e) => {
+			let t = v(e);
+			null !== t.timeoutId && clearTimeout(t.timeoutId), t.timeoutId = setTimeout(() => {
+				t.timeoutId = null, !e.context.isDestroyed && (t.lastDateEl = null, p(e, t.tooltipEl, null), y(e));
+			}, 50);
+		})(a), i = (e) => ((e, t) => {
+			if ("Escape" !== t.key || 1 !== e.context.selectedDates.length) return;
+			let n = v(e);
+			n.lastDateEl = null, g(e, "selectedDates", []), p(e, n.tooltipEl, null), y(e);
+		})(a, e);
+		n.addEventListener("mousemove", l), n.addEventListener("mouseleave", o), n.addEventListener("keydown", i), r.cleanup = () => {
+			n.removeEventListener("mousemove", l), n.removeEventListener("mouseleave", o), n.removeEventListener("keydown", i);
+		};
+	}
+	a.disableDatesGaps && (r.rangeMin ??= a.context.displayDateMin, r.rangeMax ??= a.context.displayDateMax), r.tooltipEl = a.onCreateDateRangeTooltip ? a.context.mainElement.querySelector("[data-vc-date-range-tooltip]") : null;
+	let i = null == l ? void 0 : l.dataset.vcDate;
+	if (i) {
+		let e = 1 === a.context.selectedDates.length && a.context.selectedDates[0].includes(i);
+		g(a, "selectedDates", e && !x(a) ? [i, i] : e && x(a) ? [] : a.context.selectedDates.length > 1 ? [i] : [...a.context.selectedDates, i]), a.context.selectedDates.length > 1 && b(a.context.selectedDates);
+	}
+	({
+		set: () => {
+			a.disableDatesGaps && ((n) => {
+				var a, l;
+				if (null == n || null == (a = n.context) || null == (a = a.selectedDates) || !a[0] || null == (l = n.context.disableDates) || !l[0]) return;
+				let o = e(n.context.selectedDates[0]), [r, i] = n.context.disableDates.map((t) => e(t)).reduce(([e, t], n) => [o >= n ? n : e, o < n && null === t ? n : t], [null, null]);
+				r && g(n, "displayDateMin", t(new Date(r.setDate(r.getDate() + 1)))), i && g(n, "displayDateMax", t(new Date(i.setDate(i.getDate() - 1)))), n.disableDatesPast && !n.disableAllDates && e(n.context.displayDateMin) < e(n.context.dateToday) && g(n, "displayDateMin", n.context.dateToday);
+			})(a), p(a, r.tooltipEl, l);
+		},
+		reset: () => {
+			if (!o) return;
+			let [e, t] = [a.context.selectedDates[0], a.context.selectedDates[a.context.selectedDates.length - 1]];
+			g(a, "selectedDates", a.context.selectedDates[0] === a.context.selectedDates[a.context.selectedDates.length - 1] ? [a.context.selectedDates[0], a.context.selectedDates[0]] : a.enableEdgeDatesOnly ? [e, t] : (() => {
+				let l = new Set(a.context.disableDates);
+				return n([`${e}:${t}`]).filter((e) => !l.has(e));
+			})()), a.disableDatesGaps && (g(a, "displayDateMin", r.rangeMin), g(a, "displayDateMax", r.rangeMax)), a.onCreateDateRangeTooltip && p(a, r.tooltipEl, a.context.selectedDates[0] ? l : null);
+		}
+	})[1 === a.context.selectedDates.length ? "set" : "reset"]();
+};
+var w = (e) => e.getRootNode ? e.getRootNode() : document;
+var E = /* @__PURE__ */ new WeakSet();
+var k = "data-vc-prev-tabindex";
+var T = (e) => e.tabIndex >= 0 && !e.hasAttribute("disabled") && "true" !== e.getAttribute("aria-disabled");
+var A = (e) => {
+	if (e.hasAttribute(k)) return;
+	let t = e.getAttribute("tabindex");
+	e.setAttribute(k, null == t ? "" : t);
+};
+var C = (e) => {
+	if (!e.hasAttribute(k)) return;
+	let t = e.getAttribute(k);
+	"" === t || null === t ? e.removeAttribute("tabindex") : e.setAttribute("tabindex", t), e.removeAttribute(k);
+};
+var S = (e) => {
+	e.setAttribute("inert", ""), e.ariaHidden = "true", ((e) => {
+		T(e) && (A(e), e.tabIndex = -1);
+		let t = document.createTreeWalker(e, NodeFilter.SHOW_ELEMENT, { acceptNode: (e) => T(e) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP });
+		for (; t.nextNode();) {
+			let e = t.currentNode;
+			A(e), e.tabIndex = -1;
+		}
+	})(e);
+};
+var $ = (e) => {
+	var t;
+	if (H(e), !e.context.isShowInInputMode || !e.context.currentType) return;
+	let n = e.context.mainElement.contains(w(e.context.mainElement).activeElement);
+	e.context.mainElement.dataset.vcCalendarHidden = "", g(e, "isShowInInputMode", !1), e.inputMode && S(e.context.mainElement), null != (t = e.context.inputElement) && t.hasAttribute("aria-expanded") && e.context.inputElement.setAttribute("aria-expanded", "false"), e.context.cleanupHandlers[0] && (e.context.cleanupHandlers.forEach((e) => e()), g(e, "cleanupHandlers", [])), e.inputMode && e.context.inputElement && n && (("function" == typeof e.openOnFocus || !0 === e.openOnFocus) && ((e) => {
+		E.add(e);
+	})(e), e.context.inputElement.focus()), e.onHide && e.onHide(e);
+};
+function Y(e) {
+	if (null == e || !e.getBoundingClientRect) return {
+		top: 0,
+		bottom: 0,
+		left: 0,
+		right: 0
+	};
+	let t = e.getBoundingClientRect(), n = document.documentElement;
+	return {
+		bottom: t.bottom,
+		right: t.right,
+		top: t.top + window.scrollY - n.clientTop,
+		left: t.left + window.scrollX - n.clientLeft
+	};
+}
+function N() {
+	return {
+		vw: Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0),
+		vh: Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
+	};
+}
+function I(e, t, n = 5) {
+	let a = {
+		top: !0,
+		bottom: !0,
+		left: !0,
+		right: !0
+	}, l = [];
+	if (!t || !e) return {
+		canShow: a,
+		parentPositions: l
+	};
+	let { bottom: o, top: r } = function(e) {
+		let { top: t, left: n } = {
+			left: window.scrollX || document.documentElement.scrollLeft || 0,
+			top: window.scrollY || document.documentElement.scrollTop || 0
+		}, { top: a, left: l } = Y(e), { vh: o, vw: r } = N(), i = a - t, s = l - n;
+		return {
+			top: i,
+			bottom: o - (i + e.clientHeight),
+			left: s,
+			right: r - (s + e.clientWidth)
+		};
+	}(e), { top: i, left: s } = Y(e), { height: c, width: d } = t.getBoundingClientRect(), { vh: u, vw: m } = N(), p = m / 2, h = u / 2;
+	return [
+		{
+			condition: i < h,
+			position: "top"
+		},
+		{
+			condition: i > h,
+			position: "bottom"
+		},
+		{
+			condition: s < p,
+			position: "left"
+		},
+		{
+			condition: s > p,
+			position: "right"
+		}
+	].forEach(({ condition: e, position: t }) => {
+		e && l.push(t);
+	}), Object.assign(a, {
+		top: c <= r - n,
+		bottom: c <= o - n,
+		left: d <= s,
+		right: d <= m - s
+	}), {
+		canShow: a,
+		parentPositions: l
+	};
+}
+var L = (e, t, n) => {
+	if (!e) return;
+	let a = "auto" === n ? function(e, t) {
+		let n = "left";
+		if (!t || !e) return n;
+		let { canShow: a, parentPositions: l } = I(e, t), o = a.left && a.right;
+		return (o && a.bottom ? "center" : o && a.top ? ["top", "center"] : Array.isArray(l) ? ["bottom" === l[0] ? "top" : "bottom", ...l.slice(1)] : l) || n;
+	}(e, t) : n, l = {
+		top: -t.offsetHeight,
+		bottom: e.offsetHeight,
+		left: 0,
+		center: e.offsetWidth / 2 - t.offsetWidth / 2,
+		right: e.offsetWidth - t.offsetWidth
+	}, o = Array.isArray(a) ? a[0] : "bottom", r = Array.isArray(a) ? a[1] : a;
+	t.dataset.vcPosition = o;
+	let { top: i, left: s } = Y(e), c = i + l[o], d = s + l[r], { vw: u } = N();
+	if (d + t.clientWidth > u) {
+		let e = window.innerWidth - document.body.clientWidth;
+		d = u - t.clientWidth - e;
+	} else d < 0 && (d = 0);
+	Object.assign(t.style, {
+		left: `${d}px`,
+		top: `${c}px`
+	});
+};
+var W = /* @__PURE__ */ new WeakMap();
+var H = (e) => {
+	clearTimeout(W.get(e)), W.delete(e);
+};
+var O = (e) => {
+	H(e), W.set(e, setTimeout(() => {
+		W.delete(e), e.context.isDestroyed || q(e);
+	}));
+};
+var q = (e) => {
+	var t, n;
+	if (H(e), e.context.isShowInInputMode || e.context.isDestroyed) return;
+	if (!e.context.currentType) return void e.context.mainElement.click();
+	g(e, "cleanupHandlers", []), g(e, "isShowInInputMode", !0), e.inputMode && ((n = e.context.mainElement).removeAttribute("inert"), n.removeAttribute("aria-hidden"), ((e) => {
+		C(e), e.querySelectorAll(`[${k}]`).forEach(C);
+	})(n)), L(e.context.inputElement, e.context.mainElement, e.positionToInput), e.context.mainElement.removeAttribute("data-vc-calendar-hidden"), null != (t = e.context.inputElement) && t.hasAttribute("aria-expanded") && e.context.inputElement.setAttribute("aria-expanded", "true");
+	let a = () => {
+		L(e.context.inputElement, e.context.mainElement, e.positionToInput);
+	};
+	window.addEventListener("resize", a), e.context.cleanupHandlers.push(() => window.removeEventListener("resize", a));
+	let l = (t) => {
+		"Escape" === t.key && $(e);
+	};
+	document.addEventListener("keydown", l), e.context.cleanupHandlers.push(() => document.removeEventListener("keydown", l));
+	let o = (t) => {
+		var n;
+		let a = null == (n = t.composedPath()[0]) ? t.target : n;
+		a === e.context.inputElement || e.context.mainElement.contains(a) || $(e);
+	};
+	document.addEventListener("click", o, { capture: !0 }), e.context.cleanupHandlers.push(() => document.removeEventListener("click", o, { capture: !0 })), e.onShow && e.onShow(e);
+};
+var F = "The calendar has not been initialized, please initialize it using the \"init()\" method first.";
+var P = "You specified an incorrect language label or did not specify the required number of values ​​for «locale.weekdays» or «locale.months».";
+var _ = (e) => String(e).replace(/[&<>"']/g, (e) => ({
+	"&": "&amp;",
+	"<": "&lt;",
+	">": "&gt;",
+	"\"": "&quot;",
+	"'": "&#39;"
+})[e]);
+var R = (e, t) => `\n  <div class="${_(e.styles.header)}" data-vc="header" role="group" aria-label="${_(e.labels.navigation)}">\n${t ? `    <#ArrowPrev [${t}] />\n` : ""}    <div class="${_(e.styles.headerContent)}" data-vc-header="content" aria-live="polite" aria-atomic="true">\n      <#Month />\n      <#Year />\n    </div>\n${t ? `    <#ArrowNext [${t}] />\n` : ""}  </div>\n`;
+var j = (e, t = "month") => `${R(e, t)}  <div class="${_(e.styles.wrapper)}" data-vc="wrapper">\n    <#WeekNumbers />\n    <div class="${_(e.styles.content)}" data-vc="content" role="grid">\n      <#Week />\n      <#Dates />\n      <#DateRangeTooltip />\n    </div>\n  </div>\n  <#Collapse />\n  <#ControlTime />\n`;
+var z = (e) => e;
+var K = /* @__PURE__ */ new WeakMap();
+var B = (e) => {
+	var t;
+	null == (t = K.get(e)) || t.observer.disconnect(), K.delete(e);
+};
+var U = B;
+var X = (e) => {
+	var t;
+	return !(e.animation || e.enableCollapse || e.onCreateDateEls || e.onCreateDateRangeTooltip || e.disableDatesGaps || e.popups && Object.keys(e.popups).length || e.sanitizerHTML !== z || "default" !== e.context.currentType && "multiple" !== e.context.currentType || e.layouts[e.context.currentType] !== ("multiple" === e.context.currentType ? null == (t = u(e).months) ? void 0 : t.layout(e) : j(e)));
+};
+var G = (e) => JSON.stringify(Object.entries(e).filter(([e]) => "context" !== e && "selectedDates" !== e), (e, t) => "function" == typeof t || t);
+var Z = ({ context: e }) => JSON.stringify([
+	e.currentType,
+	e.locale,
+	e.dateToday,
+	e.dateMin,
+	e.dateMax,
+	e.displayDateMin,
+	e.displayDateMax,
+	e.selectedYear,
+	e.selectedMonth,
+	e.displayMonthsCount,
+	e.selectedHours,
+	e.selectedMinutes,
+	e.selectedKeeping,
+	e.selectedTime
+]);
+var V = (e) => JSON.stringify([
+	Z(e),
+	e.context.displayYear,
+	e.context.displayWeekDate,
+	e.context.selectedDates,
+	e.context.disableDates,
+	e.context.enableDates
+]);
+var J = (e, t = !1) => {
+	let n = K.get(e);
+	if (!n || !t && !n.fullLayout || n.dirty || n.observer.takeRecords().length || !X(e)) return;
+	let a = w(e.context.mainElement).activeElement;
+	if (!a || a === e.context.mainElement || !e.context.mainElement.contains(a) || t && !a.closest("[data-vc=\"column\"], [data-vc=\"dates\"], [data-vc-week=\"numbers\"]")) try {
+		if (n.options === G(e) && n.context === V(e) && n.timezone === new Intl.DateTimeFormat().resolvedOptions().timeZone) return n;
+	} catch (l) {}
+};
+var Q = (e, t = !1) => {
+	if (B(e), X(e) && !e.context.isDestroyed) try {
+		let n = G(e), a = V(e);
+		if (n.length + a.length > 262144) return;
+		let l = Array.from(e.context.mainElement.querySelectorAll("[data-vc=\"dates\"]"));
+		if (l.length !== e.context.displayMonthsCount) return;
+		let o = {
+			observer: new MutationObserver(() => o.dirty = !0),
+			dirty: !1,
+			fullLayout: t,
+			options: n,
+			context: a,
+			structure: Z(e),
+			timezone: new Intl.DateTimeFormat().resolvedOptions().timeZone,
+			month: 12 * e.context.selectedYear + e.context.selectedMonth,
+			count: l.length
+		};
+		o.observer.observe(e.context.mainElement, {
+			subtree: !0,
+			childList: !0,
+			attributes: !0,
+			characterData: !0
+		}), K.set(e, o);
+	} catch (n) {
+		B(e);
+	}
+};
+var ee = (e, t, n, a = "") => {
+	t ? e.getAttribute(n) !== a && e.setAttribute(n, a) : e.getAttribute(n) === a && e.removeAttribute(n);
+};
+var te = (t, n, a, l, o, i, s) => {
+	var c;
+	let d = (p = i, Date.parse(`${p}T00:00:00`)), u = r(t), m = u.min > d || u.max < d || u.disabled.set.has(i) || !t.selectionMonthsMode && "current" !== s || !t.selectionYearsMode && e(i).getFullYear() !== n;
+	var p;
+	ee(a, m, "data-vc-date-disabled"), l && ee(l, m, "aria-disabled", "true"), l && m && ee(l, !0, "tabindex", "-1"), l && l.disabled !== !!m && (l.disabled = !!m), ee(a, !t.disableToday && t.context.dateToday === i, "data-vc-date-today"), ee(a, !t.disableToday && t.context.dateToday === i, "aria-current", "date"), ee(a, null == (c = t.selectedWeekends) ? void 0 : c.includes(o), "data-vc-date-weekend"), ee(a, u.holidays.has(i), "data-vc-date-holiday");
+	let h = u.selected.set.has(i), v = h ? "" : void 0;
+	h ? (ee(a, !0, "aria-selected", "true"), t.context.selectedDates.length > 1 && "multiple-ranged" === t.selectionDatesMode && (t.context.selectedDates[0] === i && t.context.selectedDates[t.context.selectedDates.length - 1] === i ? v = "first-and-last" : t.context.selectedDates[0] === i ? v = "first" : t.context.selectedDates[t.context.selectedDates.length - 1] === i && (v = "last"), t.context.selectedDates[0] !== i && t.context.selectedDates[t.context.selectedDates.length - 1] !== i && (v = "middle"))) : a.hasAttribute("data-vc-date-selected") && a.removeAttribute("aria-selected"), !u.disabled.set.has(i) && t.enableEdgeDatesOnly && t.context.selectedDates.length > 1 && "multiple-ranged" === t.selectionDatesMode && (d > u.first && d < u.last ? v = "middle" : "middle" === v && (v = void 0)), void 0 === v ? a.hasAttribute("data-vc-date-selected") && a.removeAttribute("data-vc-date-selected") : ee(a, !0, "data-vc-date-selected", v);
+};
+var ne = /* @__PURE__ */ new Map();
+var ae = /* @__PURE__ */ new Map();
+var le = (e, t, n) => {
+	var a, l;
+	let o = null == (a = e.disableWeekdays) ? void 0 : a.includes(n), i = e.disableAllDates && !(null == (l = e.context.enableDates) || !l[0]), s = r(e);
+	if ((o || i) && !s.enabled.set.has(t) && !s.disabled.set.has(t)) {
+		let n = e.context.disableDates;
+		if (s.disabled.set.add(t), e.onCreateDateEls) n.push(t), b(n), s.disabled.values = n.slice();
+		else {
+			let e = +new Date(t), a = 0, l = n.length;
+			for (; a < l;) {
+				let t = a + l >>> 1;
+				+new Date(n[t]) <= e ? a = t + 1 : l = t;
+			}
+			n.splice(a, 0, t), s.disabled.values.splice(a, 0, t);
+		}
+	}
+};
+var oe = (t, n, a, l, r, i) => {
+	var s;
+	let c, d = e(r).getDay(), m = "string" == typeof t.locale && t.locale.length ? t.locale : "en", p = document.createElement("div");
+	p.className = t.styles.date, p.dataset.vcDate = r, p.dataset.vcDateMonth = i, p.dataset.vcDateWeekDay = String(d), p.role = "gridcell", ("current" === i || t.displayDatesOutside) && (c = document.createElement("button"), c.className = t.styles.dateBtn, c.type = "button", c.dataset.vcDateBtn = "", c.ariaLabel = ((e, t) => {
+		let n = `${t}:${e}`, a = ae.get(n);
+		if (void 0 !== a) return a;
+		let l = ne.get(t);
+		l || (l = new Intl.DateTimeFormat(t, {
+			dateStyle: "long",
+			timeZone: "UTC"
+		}), ne.size >= 8 && ne.delete(ne.keys().next().value), ne.set(t, l));
+		let o = l.format(/* @__PURE__ */ new Date(`${e}T00:00:00.000Z`));
+		return ae.size >= 512 && ae.delete(ae.keys().next().value), ae.set(n, o), o;
+	})(r, m), c.innerText = String(l), p.appendChild(c)), t.enableWeekNumbers && (null == (s = u(t).weeks) || s.date(t, p, r)), le(t, r, d), te(t, n, p, c, d, r, i), a.addDate(p), t.onCreateDateEls && (t.onCreateDateEls(t, p), o(t));
+};
+var re = [
+	{
+		container: "[data-vc=\"dates\"]",
+		item: "[data-vc-date-btn]",
+		active: ["[data-vc-date-selected] [data-vc-date-btn]", "[data-vc-date-today] [data-vc-date-btn]"]
+	},
+	{
+		container: "[data-vc=\"months\"]",
+		item: "[data-vc-months-month]",
+		active: ["[data-vc-months-month-selected]"]
+	},
+	{
+		container: "[data-vc=\"years\"]",
+		item: "[data-vc-years-year]",
+		active: ["[data-vc-years-year-selected]"]
+	}
+];
+var ie = (e) => !e.hasAttribute("disabled") && "true" !== e.getAttribute("aria-disabled");
+var se = (e, t, n) => {
+	if (n && ie(n)) return e.querySelectorAll(`${t.item}:not([tabindex="-1"])`).forEach((e) => {
+		e !== n && (e.tabIndex = -1);
+	}), void ("0" !== n.getAttribute("tabindex") && (n.tabIndex = 0));
+	let a = Array.from(e.querySelectorAll(t.item));
+	if (!a[0]) return;
+	let l = ((e, t, n) => {
+		var a;
+		let l = t.active.map((t) => e.querySelector(t)).find((e) => !!e && ie(e));
+		return null == (a = null == l ? n.find(ie) : l) ? n[0] : a;
+	})(e, t, a);
+	a.forEach((e) => {
+		let t = e === l ? 0 : -1;
+		e.getAttribute("tabindex") !== String(t) && (e.tabIndex = t);
+	});
+};
+var ce = (e) => {
+	let t = e.target, n = re.find((e) => {
+		var n;
+		return null == (n = t.matches) ? void 0 : n.call(t, e.item);
+	}), a = n ? t.closest(n.container) : null;
+	n && a && se(a, n, t);
+};
+var de = (e) => {
+	re.forEach((t) => {
+		e.context.mainElement.querySelectorAll(t.container).forEach((e) => {
+			e.closest("[data-vc-ghost]") || se(e, t, null);
+		});
+	});
+};
+var ue = (e, n, a = !0) => {
+	var l;
+	U(e);
+	let r = new Date(e.context.selectedYear, e.context.selectedMonth, 1), i = e.context.mainElement.querySelectorAll("[data-vc=\"dates\"]"), s = u(e).weeks, c = e.enableWeekNumbers ? e.context.mainElement.querySelectorAll("[data-vc-week=\"numbers\"]") : [], d = null == (l = u(e).annotations) ? void 0 : l.prepare(e, i.length);
+	i.forEach((a, l) => {
+		e.selectionDatesMode || (a.dataset.vcDatesDisabled = "");
+		let i = n ? 12 * e.context.selectedYear + e.context.selectedMonth + l - n.month : -1;
+		if (n && i >= 0 && i < n.count) return;
+		if (a.textContent = "", o(e), "week" === e.context.currentType) return s?.dates(e, a), d?.(a), void (null == s || s.numbers(e, 0, 7, c[l], a));
+		let u = new Date(r);
+		u.setMonth(u.getMonth() + l);
+		let m = u.getMonth(), p = u.getFullYear(), h = (new Date(p, m, 1).getDay() - e.firstWeekday + 7) % 7, v = new Date(p, m + 1, 0).getDate(), y = h + v, g = Math.ceil(y / 7), f = 7 * g - y, x = [];
+		for (let t = 0; t < g; t++) {
+			let t = document.createElement("div");
+			t.className = e.styles.datesRow, t.setAttribute("data-vc-dates", "row"), t.setAttribute("role", "row"), x.push(t);
+		}
+		let b = 0, D = 0, M = { addDate: (e) => {
+			x[b].appendChild(e), D++, D >= 7 && (b++, D = 0);
+		} };
+		((e, t, n, a, l) => {
+			let o = new Date(n, a, 0).getDate() - (l - 1), r = 0 === a ? n - 1 : n, i = 0 === a ? 12 : a < 10 ? `0${a}` : a;
+			for (let s = l; s > 0; s--, o++) oe(e, n, t, o, `${r}-${i}-${o}`, "prev");
+		})(e, M, p, m, h), ((e, n, a, l, o) => {
+			for (let r = 1; r <= a; r++) {
+				let a = new Date(l, o, r);
+				oe(e, l, n, r, t(a), "current");
+			}
+		})(e, M, v, p, m), ((e, t, n, a, l) => {
+			let o = l + 1 === 12 ? a + 1 : a, r = l + 1 === 12 ? "01" : l + 2 < 10 ? `0${l + 2}` : l + 2;
+			for (let i = 1; i <= n; i++) {
+				let n = `${o}-${r}-${i < 10 ? `0${i}` : String(i)}`;
+				oe(e, a, t, i, n, "next");
+			}
+		})(e, M, f, p, m);
+		for (let e of x) a.appendChild(e);
+		d?.(a), s?.numbers(e, h, v, c[l], a);
+	}), de(e), a && Q(e, null == n ? void 0 : n.fullLayout);
+};
+var me = (e, t) => `${R(e, "Years" === t ? "year" : void 0)}  <div class="${_(e.styles.wrapper)}" data-vc="wrapper">\n    <div class="${_(e.styles.content)}" data-vc="content">\n      <#${t} />\n    </div>\n  </div>\n`;
+var pe = (e) => me(e, "Months");
+var he = (e) => me(e, "Years");
+var ye = (e, t, n) => e.labels["arrow" + ("prev" === t ? "Prev" : "Next")][n];
+var ge = {
+	ArrowNext: (e, t) => `<button type="button" class="${_(e.styles.arrowNext)}" data-vc-arrow="next" aria-label="${_(ye(e, "next", t))}"></button>`,
+	ArrowPrev: (e, t) => `<button type="button" class="${_(e.styles.arrowPrev)}" data-vc-arrow="prev" aria-label="${_(ye(e, "prev", t))}"></button>`,
+	Dates: (e) => `<div class="${_(e.styles.dates)}" data-vc="dates" role="rowgroup" aria-label="${_(e.labels.dates)}"></div>`,
+	Month: (e) => `<button type="button" class="${_(e.styles.month)}" data-vc="month"></button>`,
+	Months: (e) => `<div class="${_(e.styles.months)}" data-vc="months" role="grid" aria-label="${_(e.labels.months)}"></div>`,
+	Week: (e) => `<div class="${_(e.styles.week)}" data-vc="week" role="row" aria-label="${_(e.labels.week)}"></div>`,
+	Year: (e) => `<button type="button" class="${_(e.styles.year)}" data-vc="year"></button>`,
+	Years: (e) => `<div class="${_(e.styles.years)}" data-vc="years" role="grid" aria-label="${_(e.labels.years)}"></div>`
+};
+var fe = (e, t) => t.replace(/[\n\t]/g, "").replace(/<#(?!\/?Multiple)(.*?)>/g, (t, n) => {
+	let a = (n.match(/\[(.*?)\]/) || [])[1], l = ((e, t) => {
+		var n, a, l, o;
+		return "Collapse" === t ? null == (n = u(e).weeks) ? void 0 : n.component : "WeekNumbers" === t ? null == (a = u(e).weeks) ? void 0 : a.numbersComponent : "DateRangeTooltip" === t ? null == (l = u(e).annotations) ? void 0 : l.component : "ControlTime" === t ? null == (o = u(e).time) ? void 0 : o.component : Object.prototype.hasOwnProperty.call(ge, t) ? ge[t] : void 0;
+	})(e, n.replace(/[/\s\n\t]|\[(.*?)\]/g, "")), o = l ? l(e, null == a ? null : a) : "";
+	return e.sanitizerHTML(o);
+}).replace(/[\n\t]/g, "");
+var xe = (e, t) => {
+	var n, a, l;
+	let o = u(e), r = {
+		default: j,
+		month: pe,
+		year: he,
+		multiple: null == (n = o.months) ? void 0 : n.layout,
+		week: null == (a = o.weeks) ? void 0 : a.layout
+	};
+	var i;
+	Object.keys(r).forEach((t) => {
+		var n, a;
+		let l = t;
+		e.layouts[l].length || (e.layouts[l] = null == (n = null == (a = r[l]) ? void 0 : a.call(r, e)) ? "" : n);
+	}), e.context.mainElement.className = e.styles.calendar, e.context.mainElement.dataset.vc = "calendar", e.context.mainElement.dataset.vcType = e.context.currentType, e.context.mainElement.toggleAttribute("data-vc-swipe", e.enableSwipe), e.context.mainElement.role = e.inputMode ? "dialog" : "group", e.context.mainElement.tabIndex = -1, e.context.mainElement.ariaLabel = e.labels.application, null != (l = o.months) && l.render(e, t) || (null == (i = o.time) || i.destroy(e), e.context.mainElement.innerHTML = e.sanitizerHTML(fe(e, e.layouts[e.context.currentType]))), ((e) => {
+		let t = ["multiple", "multiple-ranged"].includes(String(e.selectionDatesMode));
+		e.context.mainElement.querySelectorAll("[data-vc=\"content\"][role=\"grid\"]").forEach((e) => {
+			t ? e.setAttribute("aria-multiselectable", "true") : e.removeAttribute("aria-multiselectable");
+		});
+	})(e);
+};
+var be = (e, t, n, a) => {
+	e.style.visibility = n ? "hidden" : "", t.style.visibility = a ? "hidden" : "";
+};
+var De = (n) => {
+	if ("month" === n.context.currentType) return;
+	let a = n.context.mainElement.querySelector("[data-vc-arrow=\"prev\"]"), l = n.context.mainElement.querySelector("[data-vc-arrow=\"next\"]");
+	a && l && {
+		default: () => ((n, a, l) => {
+			let o = e(t(new Date(n.context.selectedYear, n.context.selectedMonth, 1))), r = new Date(o.getTime()), i = new Date(o.getTime());
+			r.setMonth(r.getMonth() - n.monthsToSwitch), i.setMonth(i.getMonth() + n.monthsToSwitch);
+			let s = e(n.context.dateMin), c = e(n.context.dateMax);
+			n.selectionYearsMode || (s.setFullYear(o.getFullYear()), c.setFullYear(o.getFullYear())), be(a, l, !n.selectionMonthsMode || r.getFullYear() < s.getFullYear() || r.getFullYear() === s.getFullYear() && r.getMonth() < s.getMonth(), !n.selectionMonthsMode || i.getFullYear() > c.getFullYear() || i.getFullYear() === c.getFullYear() && i.getMonth() > c.getMonth() - (n.context.displayMonthsCount - 1));
+		})(n, a, l),
+		year: () => ((t, n, a) => {
+			let l = e(t.context.dateMin), o = e(t.context.dateMax);
+			be(n, a, !!(l.getFullYear() && t.context.displayYear - 7 <= l.getFullYear()), !!(o.getFullYear() && t.context.displayYear + 7 >= o.getFullYear()));
+		})(n, a, l),
+		week: () => {
+			var e;
+			return null == (e = u(n).weeks) ? void 0 : e.arrows(n, a, l);
+		}
+	}["multiple" === n.context.currentType ? "default" : n.context.currentType]();
+};
+var Me = (e, t) => {
+	let n = e.context.mainElement.querySelectorAll("[data-vc=\"month\"]"), a = e.context.mainElement.querySelectorAll("[data-vc=\"year\"]"), l = new Date(e.context.selectedYear, e.context.selectedMonth, 1);
+	[n, a].forEach((n) => null == n ? void 0 : n.forEach((n, a) => {
+		(!t || t.includes(a)) && ((e, t, n, a, l) => {
+			let o = new Date(a.setFullYear(e.context.selectedYear, e.context.selectedMonth + n)).getFullYear(), r = new Date(a.setMonth(e.context.selectedMonth + n)).getMonth(), i = e.context.locale.months.long[r], s = t.closest("[data-vc=\"column\"]");
+			s && (s.ariaLabel = `${i} ${o}`);
+			let c = {
+				month: {
+					id: r,
+					label: i
+				},
+				year: {
+					id: o,
+					label: o
+				}
+			};
+			t.innerText = String(c[l].label), t.dataset[`vc${l.charAt(0).toUpperCase() + l.slice(1)}`] = String(c[l].id), t.ariaLabel = `${e.labels[l]} ${c[l].label}`;
+			let d = {
+				month: e.selectionMonthsMode,
+				year: e.selectionYearsMode
+			}, u = !1 === d[l] || "only-arrows" === d[l];
+			u && (t.tabIndex = -1), t.disabled = u;
+		})(e, n, a, l, n.dataset.vc);
+	}));
+};
+var we = (e, t, n, a, l) => {
+	let o = {
+		month: {
+			selected: "data-vc-months-month-selected",
+			aria: "aria-selected",
+			value: "vcMonthsMonth",
+			selectedProperty: "selectedMonth"
+		},
+		year: {
+			selected: "data-vc-years-year-selected",
+			aria: "aria-selected",
+			value: "vcYearsYear",
+			selectedProperty: "selectedYear"
+		}
+	};
+	var r, i;
+	l && (null == (r = e.context.mainElement.querySelectorAll({
+		month: "[data-vc-months-month]",
+		year: "[data-vc-years-year]"
+	}[n])) || r.forEach((e) => {
+		var t;
+		e.removeAttribute(o[n].selected), null == (t = e.parentElement) || t.removeAttribute(o[n].aria);
+	}), g(e, o[n].selectedProperty, Number(t.dataset[o[n].value])), Me(e), "year" === n && De(e)), a && (t.setAttribute(o[n].selected, ""), null == (i = t.parentElement) || i.setAttribute(o[n].aria, "true"));
+};
+var Ee = (e, t, n, a, l, o, r, i) => {
+	let s = "month" === t ? "months" : "years", c = document.createElement("div");
+	c.className = e.styles[`${s}Cell`], c.setAttribute(`data-vc-${s}`, "cell"), c.role = "gridcell";
+	let d = n.cloneNode(!1);
+	return d.className = e.styles["month" === t ? "monthsMonth" : "yearsYear"], d.innerText = r, d.ariaLabel = i, d.setAttribute(`data-vc-${s}-${t}`, String(o)), l && (d.ariaDisabled = "true"), l && (d.tabIndex = -1), d.disabled = l, c.appendChild(d), we(e, d, t, a === o, !1), c;
+};
+var ke = (e, t) => {
+	var n, a;
+	return null == (n = null == (a = u(e).months) ? void 0 : a.column(e, t)) ? {
+		currentValue: null,
+		columnID: 0
+	} : n;
+};
+var Te = (t, n) => {
+	var a;
+	let l = null == n || null == (a = n.closest("[data-vc=\"header\"]")) ? void 0 : a.querySelector("[data-vc=\"year\"]"), o = l ? Number(l.dataset.vcYear) : t.context.selectedYear, r = null != n && n.dataset.vcMonth ? Number(n.dataset.vcMonth) : t.context.selectedMonth;
+	g(t, "currentType", "month"), xe(t, n), Me(t);
+	let i = t.context.mainElement.querySelector("[data-vc=\"months\"]");
+	if (!t.selectionMonthsMode || !i) return;
+	let s = t.monthsToSwitch > 1 ? t.context.locale.months.long.map((e, n) => r - t.monthsToSwitch * n).concat(t.context.locale.months.long.map((e, n) => r + t.monthsToSwitch * n)).filter((e) => e >= 0 && e <= 12) : Array.from(Array(12).keys()), c = document.createElement("button");
+	c.type = "button";
+	let d, u = () => ({
+		min: e(t.context.dateMin),
+		max: e(t.context.dateMax),
+		monthCount: t.context.displayMonthsCount - 1,
+		columnID: ke(t, "month").columnID
+	}), m = t.onCreateMonthEls ? void 0 : u();
+	for (let e = 0; e < 12; e++) {
+		e % 4 == 0 && (d = document.createElement("div"), d.className = t.styles.monthsRow, d.dataset.vcMonths = "row", d.role = "row", i.appendChild(d));
+		let { min: n, max: a, monthCount: l, columnID: p } = null == m ? u() : m, h = Ee(t, "month", c, r, o <= n.getFullYear() && e < n.getMonth() + p || o >= a.getFullYear() && e > a.getMonth() - l + p || o > a.getFullYear() || e !== r && !s.includes(e), e, t.context.locale.months.short[e], t.context.locale.months.long[e]);
+		d?.appendChild(h), t.onCreateMonthEls && t.onCreateMonthEls(t, h);
+	}
+	de(t);
+};
+var Ae = (e) => {
+	var t;
+	let n = e.selectedWeekends ? [...e.selectedWeekends] : [], a = [...e.context.locale.weekdays.long].map((t, a) => ({
+		id: a,
+		titleShort: e.context.locale.weekdays.short[a],
+		titleLong: t,
+		isWeekend: n.includes(a)
+	})), l = [...a.slice(e.firstWeekday), ...a.slice(0, e.firstWeekday)], o = null == (t = u(e).weeks) ? void 0 : t.weekday(e), r = document.createElement(o ? "div" : "b");
+	e.context.mainElement.querySelectorAll("[data-vc=\"week\"]").forEach((t) => {
+		l.forEach((n) => {
+			let a = r.cloneNode(!1);
+			a.className = e.styles.weekDay, a.role = "columnheader", a.ariaLabel = n.titleLong, a.dataset.vcWeekDay = String(n.id), n.isWeekend && (a.dataset.vcWeekDayOff = ""), o ? o(a, n.titleShort, n.titleLong) : a.innerText = n.titleShort, t.appendChild(a);
+		});
+	});
+};
+var Ce = (t, n) => {
+	let a = null != n && n.dataset.vcYear ? Number(n.dataset.vcYear) : t.context.selectedYear;
+	g(t, "currentType", "year"), xe(t, n), Me(t), De(t);
+	let l = t.context.mainElement.querySelector("[data-vc=\"years\"]");
+	if (!t.selectionYearsMode || !l) return;
+	let o = "multiple" === t.type ? t.context.selectedYear === a ? 0 : 1 : 0, r = document.createElement("button");
+	r.type = "button";
+	let i, s = () => [e(t.context.dateMin).getFullYear(), e(t.context.dateMax).getFullYear()], c = t.onCreateYearEls ? void 0 : s();
+	for (let e = t.context.displayYear - 7; e < t.context.displayYear + 8; e++) {
+		(e - (t.context.displayYear - 7)) % 5 == 0 && (i = document.createElement("div"), i.className = t.styles.yearsRow, i.dataset.vcYears = "row", i.role = "row", l.appendChild(i));
+		let [n, d] = null == c ? s() : c, u = Ee(t, "year", r, a, e < n + o || e > d, e, String(e), String(e));
+		i?.appendChild(u), t.onCreateYearEls && t.onCreateYearEls(t, u);
+	}
+	de(t);
+};
+var Se = /* @__PURE__ */ new WeakMap();
+var $e = (e) => {
+	var t, n;
+	let a = "not all" !== window.matchMedia("(prefers-color-scheme)").media;
+	var l, o;
+	if (!a || "system" !== e.selectedTheme) return null == (l = (o = e.context).cleanupSystemTheme) || l.call(o), void (e.context.mainElement.dataset.vcTheme = a ? e.selectedTheme : "light");
+	let r = e.themeAttrDetect.length ? document.querySelector(e.themeAttrDetect) : null, i = e.themeAttrDetect.replace(/^.*\[(.+)\]/g, (e, t) => t), s = Se.get(e);
+	if ((null == s ? void 0 : s.element) === r && s.attr === i) return void s.update();
+	null == (t = (n = e.context).cleanupSystemTheme) || t.call(n);
+	let c, d = window.matchMedia("(prefers-color-scheme: dark)"), u = () => {
+		let t = null == r ? void 0 : r.getAttribute(i), n = !t || "system" === t;
+		e.context.mainElement.dataset.vcTheme = n ? d.matches ? "dark" : "light" : t, n && !c ? d.addEventListener ? (d.addEventListener("change", u), c = () => d.removeEventListener("change", u)) : (d.addListener(u), c = () => d.removeListener(u)) : !n && c && (c(), c = void 0);
+	}, m = r ? ((e, t, n) => {
+		let a = new MutationObserver((e) => {
+			for (let a = 0; a < e.length; a++) if (e[a].attributeName === t) {
+				n();
+				break;
+			}
+		});
+		return a.observe(e, {
+			attributes: !0,
+			attributeFilter: [t]
+		}), () => a.disconnect();
+	})(r, i, u) : void 0;
+	Se.set(e, {
+		element: r,
+		attr: i,
+		update: u
+	}), g(e, "cleanupSystemTheme", () => {
+		m?.(), c?.(), Se.delete(e), g(e, "cleanupSystemTheme", void 0);
+	}), u();
+};
+function Ye(e) {
+	return Ye = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(e) {
+		return typeof e;
+	} : function(e) {
+		return e && "function" == typeof Symbol && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
+	}, Ye(e);
+}
+function Ne(e, t, n) {
+	return (t = function(e) {
+		var t = function(e) {
+			if ("object" != Ye(e) || !e) return e;
+			var t = e[Symbol.toPrimitive];
+			if (void 0 !== t) {
+				var n = t.call(e, "string");
+				if ("object" != Ye(n)) return n;
+				throw TypeError("@@toPrimitive must return a primitive value.");
+			}
+			return String(e);
+		}(e);
+		return "symbol" == Ye(t) ? t : t + "";
+	}(t)) in e ? Object.defineProperty(e, t, {
+		value: n,
+		enumerable: !0,
+		configurable: !0,
+		writable: !0
+	}) : e[t] = n, e;
+}
+function Ie(e, t) {
+	var n = Object.keys(e);
+	if (Object.getOwnPropertySymbols) {
+		var a = Object.getOwnPropertySymbols(e);
+		t && (a = a.filter(function(t) {
+			return Object.getOwnPropertyDescriptor(e, t).enumerable;
+		})), n.push.apply(n, a);
+	}
+	return n;
+}
+function Le(e) {
+	for (var t = 1; t < arguments.length; t++) {
+		var n = null == arguments[t] ? {} : arguments[t];
+		t % 2 ? Ie(Object(n), !0).forEach(function(t) {
+			Ne(e, t, n[t]);
+		}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(n)) : Ie(Object(n)).forEach(function(t) {
+			Object.defineProperty(e, t, Object.getOwnPropertyDescriptor(n, t));
+		});
+	}
+	return e;
+}
+var We = /* @__PURE__ */ new Map();
+var He = (e, t, n) => {
+	let a = new Intl.DateTimeFormat(e, {
+		[t]: n,
+		timeZone: "UTC"
+	});
+	return Array.from({ length: "weekday" === t ? 7 : 12 }, (e, n) => {
+		return (l = a.format(new Date(Date.UTC(1978, "month" === t ? n : 0, "weekday" === t ? n + 1 : 1)))).charAt(0).toUpperCase() + l.slice(1).replace(/\./, "");
+		var l;
+	});
+};
+var Oe = (e) => {
+	if (e.context.locale.weekdays.short[6] && e.context.locale.weekdays.long[6] && e.context.locale.months.short[11] && e.context.locale.months.long[11]) return;
+	if ("string" != typeof e.locale) {
+		var t, n, a, l;
+		if (!(null != (t = e.locale) && null != (t = t.weekdays) && t.short[6] && null != (n = e.locale) && null != (n = n.weekdays) && n.long[6] && null != (a = e.locale) && null != (a = a.months) && a.short[11] && null != (l = e.locale) && null != (l = l.months) && l.long[11])) throw Error(P);
+		g(e, "locale", Le({}, e.locale));
+		return;
+	}
+	if ("string" == typeof e.locale && !e.locale.length) throw Error(P);
+	let o = We.get(e.locale);
+	o || (o = {
+		weekdays: {
+			short: He(e.locale, "weekday", "short"),
+			long: He(e.locale, "weekday", "long")
+		},
+		months: {
+			short: He(e.locale, "month", "short"),
+			long: He(e.locale, "month", "long")
+		}
+	}, We.size >= 8 && We.delete(We.keys().next().value), We.set(e.locale, o));
+	for (let r of ["weekdays", "months"]) for (let t of ["short", "long"]) e.context.locale[r][t].push(...o[r][t]);
+};
+var qe = (e, t = !0) => {
+	var n;
+	U(e), $e(e), Oe(e), xe(e), Me(e), De(e), null == (n = u(e).time) || n.render(e), {
+		default: () => {
+			Ae(e), ue(e, void 0, !1);
+		},
+		multiple: () => {
+			Ae(e), ue(e, void 0, !1);
+		},
+		week: () => {
+			var t;
+			null == (t = u(e).weeks) || t.init(e), Ae(e), ue(e, void 0, !1);
+		},
+		month: () => Te(e),
+		year: () => Ce(e)
+	}[e.context.currentType](), t && Q(e, !0);
+};
+var Fe = (t, n = !1) => {
+	o(t), t.context.mainElement.querySelectorAll("[data-vc-date]").forEach((a) => {
+		let l = a.querySelector("[data-vc-date-btn]"), o = a.dataset.vcDate, r = e(o), i = r.getDay();
+		n && le(t, o, i);
+		let s = n ? a.dataset.vcDateMonth : "current";
+		"prev" === s && r.setMonth(r.getMonth() + 1, 1), "next" === s && r.setMonth(r.getMonth() - 1, 1), te(t, n ? r.getFullYear() : t.context.selectedYear, a, l, i, o, s);
+	}), de(t);
+};
+var Pe = (e) => {
+	let t = [
+		{
+			container: "[data-vc=\"dates\"]",
+			row: "[data-vc-dates=\"row\"]",
+			item: "[data-vc-date-btn]"
+		},
+		{
+			container: "[data-vc=\"months\"]",
+			row: "[data-vc-months=\"row\"]",
+			item: "[data-vc-months-month]"
+		},
+		{
+			container: "[data-vc=\"years\"]",
+			row: "[data-vc-years=\"row\"]",
+			item: "[data-vc-years-year]"
+		}
+	], n = (e) => !e.disabled && "true" !== e.getAttribute("aria-disabled"), a = (e) => {
+		let a = e.target.closest("button");
+		if (!a || ![
+			"ArrowUp",
+			"ArrowDown",
+			"ArrowLeft",
+			"ArrowRight"
+		].includes(e.key)) return;
+		let l, o = t.find((e) => a.matches(e.item)), r = o ? a.closest(o.container) : null;
+		if (o && r && !r.closest("[data-vc-ghost]") && n(a)) {
+			if ("ArrowUp" === e.key || "ArrowDown" === e.key) l = ((e, t, a, l) => {
+				var o;
+				let r = a.closest(t.row);
+				if (!r) return a;
+				let i = Array.from(e.querySelectorAll(t.row)), s = i.indexOf(r), c = Array.from(r.children).indexOf(a.parentElement), d = i[s + l], u = null == d || null == (o = d.children[c]) ? void 0 : o.querySelector(t.item);
+				return u && n(u) ? u : a;
+			})(r, o, a, "ArrowUp" === e.key ? -1 : 1);
+			else {
+				let t = Array.from(r.querySelectorAll(o.item)).filter(n), i = t.indexOf(a);
+				if (-1 === i) return;
+				l = "ArrowLeft" === e.key ? t[Math.max(0, i - 1)] : t[Math.min(t.length - 1, i + 1)];
+			}
+			e.preventDefault(), l?.focus();
+		}
+	};
+	return e.context.mainElement.addEventListener("keydown", a), e.context.mainElement.addEventListener("focusin", ce), () => {
+		e.context.mainElement.removeEventListener("keydown", a), e.context.mainElement.removeEventListener("focusin", ce);
+	};
+};
+var _e = "[data-vc=\"dates\"]";
+var Re = (e, t) => "next" === e ? t : -t;
+var je = (n) => {
+	let a = {
+		selector: _e,
+		shift: (a) => ((n, a) => {
+			let l = e(t(new Date(n.context.selectedYear, n.context.selectedMonth, 1)));
+			l.setMonth(l.getMonth() + Re(a, n.monthsToSwitch)), g(n, "selectedMonth", l.getMonth()), g(n, "selectedYear", l.getFullYear());
+		})(n, a),
+		render: (e, t) => ue(n, t)
+	};
+	return {
+		default: a,
+		multiple: a,
+		week: {
+			selector: _e,
+			shift: (e) => {
+				var t;
+				return null == (t = u(n).weeks) ? void 0 : t.shift(n, e);
+			},
+			render: () => ue(n)
+		},
+		year: {
+			selector: "[data-vc=\"years\"]",
+			shift: (e) => g(n, "displayYear", n.context.displayYear + Re(e, 15)),
+			render: (e) => Ce(n, e)
+		},
+		month: null
+	}[n.context.currentType];
+};
+var ze = (e, t, n) => {
+	var a;
+	let l = je(e);
+	if (!l) return;
+	let { mainElement: o } = e.context, r = o.contains(w(o).activeElement), i = "multiple" === e.context.currentType ? J(e, !0) : void 0;
+	U(e), l.shift(t);
+	let s = i ? null == (a = u(e).months) ? void 0 : a.rotate(e, i) : void 0;
+	s || (i = void 0), Me(e, s), De(e);
+	let c = u(e).motion;
+	c && e.animation ? c.navigate(e, l.selector, t, () => l.render(n, i)) : l.render(n, i), ((e, t, n) => {
+		var a;
+		let { mainElement: l } = e.context;
+		if (!n || l.contains(w(l).activeElement)) return;
+		let o = l.querySelector(`[data-vc-arrow="${t}"]`);
+		if (o && "hidden" !== o.style.visibility) return o.focus();
+		null == (a = Array.from(l.querySelectorAll("[tabindex=\"0\"]")).find((e) => !e.closest("[data-vc-ghost]"))) || a.focus();
+	})(e, t, r);
+};
+var Ke = (e, t, n) => {
+	let a = t.dataset.vcDate, l = t.closest("[data-vc-date][data-vc-date-selected]"), o = x(e);
+	(!l || o) && g(e, "selectedDates", l ? e.context.selectedDates.filter((e) => e !== a) : n ? [...e.context.selectedDates, a] : [a]);
+};
+var Be = ["month", "year"];
+var Ue = "[data-vc=\"column\"]";
+var Xe = (e, t, n) => {
+	let a = u(e).motion;
+	a && e.animation ? a.changeView(e, t, n) : n();
+};
+var Ge = (e, t) => {
+	var n;
+	let { columnID: a } = ke(e, e.context.currentType);
+	g(e, "currentType", e.type), Xe(e, a, () => qe(e)), null == (n = e.context.mainElement.querySelector(`[data-vc="${t}"]`)) || n.focus();
+};
+var Ze = (e) => {
+	let t = (t) => {
+		var n, a;
+		((e, t) => {
+			let n = t.target, a = n.closest("[data-vc-arrow]");
+			a && (ze(e, a.dataset.vcArrow, n), e.onClickArrow && e.onClickArrow(e, t));
+		})(e, t), null == (n = u(e).weeks) || n.click(e, t), ((e, t) => {
+			let n = t.target, a = n.closest("[data-vc-date-btn]");
+			if (!e.selectionDatesMode || ![
+				"single",
+				"multiple",
+				"multiple-ranged"
+			].includes(e.selectionDatesMode) || !a) return;
+			let l = a.closest("[data-vc-date]");
+			({
+				single: () => Ke(e, l, !1),
+				multiple: () => Ke(e, l, !0),
+				"multiple-ranged": () => M(e, l)
+			})[e.selectionDatesMode](), e.context.selectedDates && b(e.context.selectedDates), e.onClickDate && e.onClickDate(e, t), e.inputMode && e.context.inputElement && e.context.mainElement && e.onChangeToInput && e.onChangeToInput(e, t);
+			let o = n.closest("[data-vc-date-month=\"prev\"]"), r = n.closest("[data-vc-date-month=\"next\"]");
+			({
+				prev: () => e.enableMonthChangeOnDayClick ? ze(e, "prev") : Fe(e),
+				next: () => e.enableMonthChangeOnDayClick ? ze(e, "next") : Fe(e),
+				current: () => Fe(e)
+			})[o ? "prev" : r ? "next" : "current"]();
+		})(e, t), ((e, t) => {
+			let n = {
+				month: e.selectionMonthsMode,
+				year: e.selectionYearsMode
+			};
+			Be.forEach((a) => {
+				n[a] && t.target && ((e, t, n) => {
+					let a = t.target, l = a.closest(`[data-vc="${n}"]`), o = ((e, t) => {
+						let n = t.closest(Ue);
+						return n ? Array.from(e.context.mainElement.querySelectorAll(Ue)).indexOf(n) : 0;
+					})(e, a), r = {
+						year: () => Xe(e, o, () => Ce(e, a)),
+						month: () => Xe(e, o, () => Te(e, a))
+					};
+					if (l && e.onClickTitle && e.onClickTitle(e, t), l && e.context.currentType !== n) {
+						let t = a.closest(Ue);
+						return r[n](), ((e, t, n) => {
+							var a;
+							return null == (a = (null == n ? e.context.mainElement : n).querySelector(`[data-vc-${t}s-${t}][tabindex="0"]`)) ? void 0 : a.focus();
+						})(e, n, t);
+					}
+					let i = a.closest(`[data-vc-${n}s-${n}]`);
+					if (i) return ((e, t, n, a) => {
+						({
+							year: () => {
+								var t;
+								if ("multiple" === e.type) return null == (t = u(e).months) ? void 0 : t.select(e, "year", a);
+								g(e, "selectedYear", Number(a.dataset.vcYearsYear));
+							},
+							month: () => {
+								var t;
+								if ("multiple" === e.type) return null == (t = u(e).months) ? void 0 : t.select(e, "month", a);
+								g(e, "selectedMonth", Number(a.dataset.vcMonthsMonth));
+							}
+						})[n](), {
+							year: () => {
+								var n;
+								return null == (n = e.onClickYear) ? void 0 : n.call(e, e, t);
+							},
+							month: () => {
+								var n;
+								return null == (n = e.onClickMonth) ? void 0 : n.call(e, e, t);
+							}
+						}[n](), e.context.currentType === e.type ? we(e, a, n, !0, !0) : Ge(e, n);
+					})(e, t, n, i);
+					let s = a.closest("[data-vc=\"grid\"]"), c = a.closest("[data-vc=\"column\"]");
+					(e.context.currentType === n && l || "multiple" === e.type && e.context.currentType === n && s && !c) && Ge(e, n);
+				})(e, t, a);
+			});
+		})(e, t), null == (a = u(e).weeks) || a.collapseClick(e, t);
+	};
+	return e.context.mainElement.addEventListener("click", t), () => e.context.mainElement.removeEventListener("click", t);
+};
+var Ve = /* @__PURE__ */ new WeakMap();
+var Je = (e, t) => {
+	let a = e[t].map((e) => e instanceof Date ? e.getTime() : e), l = Ve.get(e), o = null == l ? void 0 : l[t];
+	if (o && a.length === o.values.length) {
+		let e = 0;
+		for (; e < a.length && a[e] === o.values[e];) e++;
+		if (e === a.length && o.timezone === new Intl.DateTimeFormat().resolvedOptions().timeZone) return o.dates.slice();
+	}
+	let r = n(e[t]);
+	if (r.length > 1 && b(r), r.length > 128 && r.length <= 1e4 && a.length <= 1e4) {
+		let n = null == l ? {} : l;
+		n[t] = {
+			values: a,
+			dates: r.slice(),
+			timezone: new Intl.DateTimeFormat().resolvedOptions().timeZone
+		}, Ve.set(e, n);
+	} else l && delete l[t];
+	return r;
+};
+var Qe = (e, t) => "today" === e ? (() => {
+	let e = /* @__PURE__ */ new Date();
+	/* @__PURE__ */
+	return (/* @__PURE__ */ new Date(e.getTime() - 6e4 * e.getTimezoneOffset())).toISOString().substring(0, 10);
+})() : e instanceof Date || "number" == typeof e || "string" == typeof e ? n([e])[0] : t;
+var et = (e, t, n) => {
+	g(e, "selectedMonth", t), g(e, "selectedYear", n), g(e, "displayYear", n);
+};
+var tt = (t) => {
+	var a, l;
+	if (t.enableCollapse && !["default", "week"].includes(t.type)) throw Error("The «enableCollapse» parameter is only supported by the «default» and «week» calendar types.");
+	g(t, "currentType", t.type), ((e) => {
+		if ("multiple" === e.type && (e.displayMonthsCount <= 1 || e.displayMonthsCount > 12) || "multiple" !== e.type && e.displayMonthsCount > 1) throw Error("For the «multiple» calendar type, the «displayMonthsCount» parameter can have a value from 2 to 12, and for all others it cannot be greater than 1.");
+		g(e, "displayMonthsCount", e.displayMonthsCount ? e.displayMonthsCount : "multiple" === e.type ? 2 : 1);
+	})(t), ((t) => {
+		var n, a, l;
+		let o = Qe(t.dateMin, t.dateMin), r = Qe(t.dateMax, t.dateMax), i = Qe(t.displayDateMin, o), s = Qe(t.displayDateMax, r);
+		if (g(t, "dateToday", Qe(t.dateToday, t.dateToday)), g(t, "displayDateMin", i ? e(o) >= e(i) ? o : i : o), g(t, "displayDateMax", s ? e(r) <= e(s) ? r : s : r), g(t, "displayDateMin", t.disableDatesPast && !t.disableAllDates && e(i) < e(t.context.dateToday) || t.disableAllDates ? t.context.dateToday : i), g(t, "displayDateMax", t.disableAllDates ? t.context.dateToday : s), g(t, "disableDates", t.disableDates[0] && !t.disableAllDates ? Je(t, "disableDates") : t.disableAllDates ? [t.context.displayDateMin] : []), g(t, "enableDates", t.enableDates[0] ? Je(t, "enableDates") : []), null != (n = t.context.enableDates) && n[0] && null != (a = t.context.disableDates) && a[0]) {
+			let e = new Set(t.context.enableDates);
+			g(t, "disableDates", t.context.disableDates.filter((t) => !e.has(t)));
+		}
+		null != (l = t.context.enableDates) && l[0] && t.disableAllDates && (g(t, "displayDateMin", t.context.enableDates[0]), g(t, "displayDateMax", t.context.enableDates[t.context.enableDates.length - 1])), g(t, "dateMin", t.displayDisabledDates ? o : t.context.displayDateMin), g(t, "dateMax", t.displayDisabledDates ? r : t.context.displayDateMax);
+	})(t), ((t) => {
+		var a;
+		if (t.enableJumpToSelectedDate && null != (a = t.selectedDates) && a[0] && void 0 === t.selectedMonth && void 0 === t.selectedYear) {
+			let a = e(n(t.selectedDates)[0]);
+			et(t, a.getMonth(), a.getFullYear());
+			return;
+		}
+		if (((t) => {
+			let a = (e) => {
+				let n = new Date(e);
+				et(t, n.getMonth(), n.getFullYear());
+			};
+			return t.displayDateMin && "today" !== t.displayDateMin && (l = t.displayDateMin, o = /* @__PURE__ */ new Date(), new Date(l).getTime() > o.getTime()) ? (a(e(Qe(t.selectedDates.length && t.selectedDates[0] ? n(t.selectedDates)[0] : t.displayDateMin, t.displayDateMin))), !0) : !(!t.displayDateMax || "today" === t.displayDateMax || !((e, t) => new Date(e).getTime() < t.getTime())(t.displayDateMax, /* @__PURE__ */ new Date()) || (a(e(Qe(t.selectedDates.length && t.selectedDates[0] ? n(t.selectedDates)[0] : t.displayDateMax, t.displayDateMax))), 0));
+			var l, o;
+		})(t)) return;
+		let l = void 0 !== t.selectedMonth && Number(t.selectedMonth) >= 0 && Number(t.selectedMonth) < 12, o = void 0 !== t.selectedYear && Number(t.selectedYear) >= 0 && Number(t.selectedYear) <= 9999;
+		et(t, l ? Number(t.selectedMonth) : e(t.context.dateToday).getMonth(), o ? Number(t.selectedYear) : e(t.context.dateToday).getFullYear());
+	})(t), ((e) => {
+		var t;
+		g(e, "selectedDates", null != (t = e.selectedDates) && t[0] ? n(e.selectedDates) : []);
+	})(t), null == (a = u(t).weeks) || a.init(t), null == (l = u(t).time) || l.init(t);
+};
+var nt = (e, { year: t, month: n, dates: a, time: l, locale: o }, r = !0, i) => {
+	var s, c, d, m;
+	U(e);
+	let p = u(e);
+	null == (s = p.motion) || s.reset(e), null == (c = p.time) || c.destroy(e), null == (d = p.annotations) || d.destroy(e), D(e);
+	let h = {
+		year: e.selectedYear,
+		month: e.selectedMonth,
+		dates: e.selectedDates,
+		time: e.selectedTime
+	};
+	var v;
+	e.selectedYear = t ? h.year : e.context.selectedYear, e.selectedMonth = n ? h.month : e.context.selectedMonth, e.selectedTime = l ? h.time : e.context.selectedTime, e.selectedDates = "only-first" === a && null != (m = e.context.selectedDates) && m[0] ? [e.context.selectedDates[0]] : !0 === a ? h.dates : e.context.selectedDates, o && g(e, "locale", {
+		months: {
+			short: [],
+			long: []
+		},
+		weekdays: {
+			short: [],
+			long: []
+		}
+	}), tt(e), r && (i && Oe(e), i && i.structure === Z(e) ? ($e(e), null == (v = p.time) || v.render(e), Fe(e, !0)) : qe(e, !1)), e.selectedYear = h.year, e.selectedMonth = h.month, e.selectedDates = h.dates, e.selectedTime = h.time, "multiple-ranged" === e.selectionDatesMode && M(e, null, !!a), r && Q(e, !0);
+};
+var at = (e, t, n) => {
+	if (!e.context.isInit) throw Error(F);
+	m(e), nt(e, Le(Le({}, {
+		year: !0,
+		month: !0,
+		dates: !0,
+		time: !0,
+		locale: !0
+	}), t), !(e.inputMode && !e.context.inputModeInit), n), e.onUpdate && e.onUpdate(e);
+};
+var lt = [
+	"extensions",
+	"context",
+	"init",
+	"update",
+	"destroy",
+	"show",
+	"hide",
+	"set",
+	"queryAndMemoize"
+];
+var ot = (e, t, n = !0) => {
+	let a = Object.keys(t);
+	for (let l = 0; l < a.length; l++) {
+		let o = a[l];
+		"__proto__" !== o && "constructor" !== o && "prototype" !== o && (n && lt.includes(String(o)) || ("object" != typeof e[o] || null === e[o] || "object" != typeof t[o] || null === t[o] || t[o] instanceof Date || Array.isArray(t[o]) ? void 0 !== t[o] && (e[o] = t[o]) : ot(e[o], t[o], !1)));
+	}
+};
+var rt = {
+	application: "Calendar",
+	navigation: "Calendar Navigation",
+	arrowNext: {
+		month: "Next month",
+		year: "Next list of years",
+		week: "Next week"
+	},
+	arrowPrev: {
+		month: "Previous month",
+		year: "Previous list of years",
+		week: "Previous week"
+	},
+	month: "Select month, current selected month:",
+	months: "List of months",
+	year: "Select year, current selected year:",
+	years: "List of years",
+	week: "Days of the week",
+	weekNumber: "Numbers of weeks in a year",
+	collapse: "Collapse to a single week",
+	expand: "Expand to the whole month",
+	dates: "Dates in the current month",
+	selectingTime: "Selecting a time ",
+	inputHour: "Hours",
+	inputMinute: "Minutes",
+	rangeHour: "Slider for selecting hours",
+	rangeMinute: "Slider for selecting minutes",
+	btnKeeping: "Switch AM/PM, current position:"
+};
+var it = {
+	calendar: "vc",
+	controls: "vc-controls",
+	grid: "vc-grid",
+	column: "vc-column",
+	header: "vc-header",
+	headerContent: "vc-header__content",
+	month: "vc-month",
+	year: "vc-year",
+	arrowPrev: "vc-arrow vc-arrow_prev",
+	arrowNext: "vc-arrow vc-arrow_next",
+	wrapper: "vc-wrapper",
+	content: "vc-content",
+	months: "vc-months",
+	monthsRow: "vc-months__row",
+	monthsCell: "vc-months__cell",
+	monthsMonth: "vc-months__month",
+	years: "vc-years",
+	yearsRow: "vc-years__row",
+	yearsCell: "vc-years__cell",
+	yearsYear: "vc-years__year",
+	week: "vc-week",
+	weekDay: "vc-week__day",
+	weekDayBtn: "vc-week__day-btn",
+	weekNumbers: "vc-week-numbers",
+	weekNumbersTitle: "vc-week-numbers__title",
+	weekNumbersContent: "vc-week-numbers__content",
+	weekNumber: "vc-week-number",
+	collapse: "vc-collapse",
+	dates: "vc-dates",
+	datesRow: "vc-dates__row",
+	date: "vc-date",
+	dateBtn: "vc-date__btn",
+	datePopup: "vc-date__popup",
+	dateRangeTooltip: "vc-date-range-tooltip",
+	time: "vc-time",
+	timeContent: "vc-time__content",
+	timeHour: "vc-time__hour",
+	timeMinute: "vc-time__minute",
+	timeKeeping: "vc-time__keeping",
+	timeRanges: "vc-time__ranges",
+	timeRange: "vc-time__range"
+};
+var st = class {
+	constructor() {
+		Ne(this, "type", "default"), Ne(this, "inputMode", !1), Ne(this, "openOnFocus", !0), Ne(this, "positionToInput", "left"), Ne(this, "animation", !1), Ne(this, "firstWeekday", 1), Ne(this, "monthsToSwitch", 1), Ne(this, "themeAttrDetect", "html[data-theme]"), Ne(this, "locale", "en"), Ne(this, "dateToday", "today"), Ne(this, "dateMin", "1970-01-01"), Ne(this, "dateMax", "2470-12-31"), Ne(this, "displayDateMin", void 0), Ne(this, "displayDateMax", void 0), Ne(this, "displayDatesOutside", !0), Ne(this, "displayDisabledDates", !1), Ne(this, "displayMonthsCount", void 0), Ne(this, "disableDates", []), Ne(this, "disableAllDates", !1), Ne(this, "disableDatesPast", !1), Ne(this, "disableDatesGaps", !1), Ne(this, "disableWeekdays", []), Ne(this, "disableToday", !1), Ne(this, "enableDates", []), Ne(this, "enableEdgeDatesOnly", !0), Ne(this, "enableDateToggle", !0), Ne(this, "enableWeekNumbers", !1), Ne(this, "enableMonthChangeOnDayClick", !0), Ne(this, "enableJumpToSelectedDate", !1), Ne(this, "enableCollapse", !1), Ne(this, "enableSwipe", !1), Ne(this, "selectionDatesMode", "single"), Ne(this, "selectionMonthsMode", !0), Ne(this, "selectionYearsMode", !0), Ne(this, "selectionTimeMode", !1), Ne(this, "selectedDates", []), Ne(this, "selectedMonth", void 0), Ne(this, "selectedYear", void 0), Ne(this, "selectedHolidays", []), Ne(this, "selectedWeekends", [0, 6]), Ne(this, "selectedTime", void 0), Ne(this, "selectedTheme", "system"), Ne(this, "timeMinHour", 0), Ne(this, "timeMaxHour", 23), Ne(this, "timeMinMinute", 0), Ne(this, "timeMaxMinute", 59), Ne(this, "timeControls", "all"), Ne(this, "timeStepHour", 1), Ne(this, "timeStepMinute", 1), Ne(this, "sanitizerHTML", z), Ne(this, "onClickDate", void 0), Ne(this, "onClickWeekDay", void 0), Ne(this, "onClickWeekNumber", void 0), Ne(this, "onClickTitle", void 0), Ne(this, "onClickMonth", void 0), Ne(this, "onClickYear", void 0), Ne(this, "onClickArrow", void 0), Ne(this, "onChangeTime", void 0), Ne(this, "onChangeToInput", void 0), Ne(this, "onCreateDateRangeTooltip", void 0), Ne(this, "onCreateDateEls", void 0), Ne(this, "onCreateMonthEls", void 0), Ne(this, "onCreateYearEls", void 0), Ne(this, "onInit", void 0), Ne(this, "onUpdate", void 0), Ne(this, "onDestroy", void 0), Ne(this, "onShow", void 0), Ne(this, "onHide", void 0), Ne(this, "popups", {}), Ne(this, "labels", Le(Le({}, rt), {}, {
+			arrowNext: Le({}, rt.arrowNext),
+			arrowPrev: Le({}, rt.arrowPrev)
+		})), Ne(this, "layouts", {
+			default: "",
+			multiple: "",
+			month: "",
+			year: "",
+			week: ""
+		}), Ne(this, "styles", Le({}, it));
+	}
+};
+var pt = (e, t) => {
+	var n;
+	if ("multiple" !== e.type) return {
+		currentValue: null,
+		columnID: 0
+	};
+	let a = e.context.mainElement.querySelectorAll("[data-vc=\"column\"]"), l = Array.from(a).findIndex((e) => e.closest(`[data-vc-column="${t}"]`));
+	return {
+		currentValue: l >= 0 ? Number(null == (n = a[l].querySelector(`[data-vc="${t}"]`)) ? void 0 : n.getAttribute(`data-vc-${t}`)) : null,
+		columnID: Math.max(l, 0)
+	};
+};
+var ht = (e, t, n) => {
+	let { currentValue: a, columnID: l } = pt(e, t);
+	return "month" === e.context.currentType && l >= 0 ? n - l : "year" === e.context.currentType && e.context.selectedYear !== a ? n - 1 : n;
+};
+var vt = /* @__PURE__ */ Object.freeze({
+	name: "months",
+	layout: (e) => `\n  <div class="${_(e.styles.controls)}" data-vc="controls" role="group" aria-label="${_(e.labels.navigation)}">\n    <#ArrowPrev [month] />\n    <#ArrowNext [month] />\n  </div>\n  <div class="${_(e.styles.grid)}" data-vc="grid">\n    <#Multiple>\n      <div class="${_(e.styles.column)}" data-vc="column" role="group">\n        <div class="${_(e.styles.header)}" data-vc="header">\n          <div class="${_(e.styles.headerContent)}" data-vc-header="content" aria-live="polite" aria-atomic="true">\n            <#Month />\n            <#Year />\n          </div>\n        </div>\n        <div class="${_(e.styles.wrapper)}" data-vc="wrapper">\n          <#WeekNumbers />\n          <div class="${_(e.styles.content)}" data-vc="content" role="grid">\n            <#Week />\n            <#Dates />\n          </div>\n        </div>\n      </div>\n    <#/Multiple>\n    <#DateRangeTooltip />\n  </div>\n  <#ControlTime />\n`,
+	render: (e, t) => {
+		var n;
+		if ("multiple" === e.context.currentType) return null == (n = u(e).time) || n.destroy(e), e.context.mainElement.innerHTML = e.sanitizerHTML(((e, t) => t.replace(RegExp("<#Multiple>(.*?)<#\\/Multiple>", "gs"), (t, n) => {
+			let a = Array(e.context.displayMonthsCount).fill(n).join("");
+			return e.sanitizerHTML(a);
+		}).replace(/[\n\t]/g, ""))(e, fe(e, e.layouts.multiple))), !0;
+		if ("multiple" !== e.type || !t) return !1;
+		let a = e.context.mainElement.querySelector("[data-vc=\"controls\"]"), l = e.context.mainElement.querySelector("[data-vc=\"grid\"]"), o = t.closest("[data-vc=\"column\"]");
+		return a && a.remove(), l && (l.dataset.vcGrid = "hidden"), o && (o.dataset.vcColumn = e.context.currentType), o && (o.innerHTML = e.sanitizerHTML(fe(e, e.layouts[e.context.currentType]))), !0;
+	},
+	column: pt,
+	select: (t, n, a) => "month" === n ? ((t, n) => {
+		let a = n.closest("[data-vc-column=\"month\"]").querySelector("[data-vc=\"year\"]"), l = ht(t, "month", Number(n.dataset.vcMonthsMonth)), o = Number(a.dataset.vcYear), r = e(t.context.dateMin), i = e(t.context.dateMax), s = l < r.getMonth() && o <= r.getFullYear(), c = l > i.getMonth() && o >= i.getFullYear();
+		g(t, "selectedYear", o), g(t, "selectedMonth", s ? r.getMonth() : c ? i.getMonth() : l);
+	})(t, a) : ((t, n) => {
+		let a = ht(t, "year", Number(n.dataset.vcYearsYear)), l = e(t.context.dateMin), o = e(t.context.dateMax), r = t.context.displayMonthsCount - 1, { columnID: i } = pt(t, "year"), s = t.context.selectedMonth < l.getMonth() && a <= l.getFullYear(), c = t.context.selectedMonth > o.getMonth() - r + i && a >= o.getFullYear(), d = a < l.getFullYear(), u = a > o.getFullYear(), m = s || d ? l.getFullYear() : c || u ? o.getFullYear() : a, p = s || d ? l.getMonth() : c || u ? o.getMonth() - r + i : t.context.selectedMonth;
+		g(t, "selectedYear", m), g(t, "selectedMonth", p);
+	})(t, a),
+	rotate: (e, t) => {
+		var n;
+		let a = 12 * e.context.selectedYear + e.context.selectedMonth - t.month;
+		if (!a || Math.abs(a) >= t.count) return;
+		let l = Array.from(e.context.mainElement.querySelectorAll("[data-vc=\"column\"]")), o = null == (n = l[0]) ? void 0 : n.parentElement;
+		if (!o || l.length !== t.count || l.some((e) => e.parentElement !== o) || Array.from(o.childNodes).some((e) => {
+			var t;
+			return 1 === e.nodeType ? !l.includes(e) : 3 !== e.nodeType || !(null == (t = e.textContent) || !t.trim());
+		})) return;
+		let r = [];
+		if (a > 0) {
+			let e = l[l.length - 1].nextSibling;
+			for (let n = 0; n < a; n++) {
+				let i = l[n].nextSibling;
+				3 === (null == i ? void 0 : i.nodeType) && i !== e && o.insertBefore(i, e), o.insertBefore(l[n], e), r.push(t.count - a + n);
+			}
+		} else for (let i = t.count + a; i < t.count; i++) {
+			let e = l[i].previousSibling;
+			o.insertBefore(l[i], l[0]), 3 === (null == e ? void 0 : e.nodeType) && o.insertBefore(e, l[0]), r.push(i - t.count - a);
+		}
+		return r;
+	}
+});
+var on = class e extends st {
+	constructor(t, n) {
+		var a;
+		super(), Ne(this, "extensions", void 0), Ne(this, "init", () => ((e) => {
+			var t;
+			if (e.context.isInit) throw Error("The calendar has already been initialized, calling init() again is not allowed. Create a new Calendar instance instead.");
+			if (m(e), g(e, "originalElement", e.context.mainElement.cloneNode(!0)), g(e, "isInit", !0), e.inputMode) {
+				let t = ((e) => {
+					g(e, "inputElement", e.context.mainElement);
+					let t = e.context.inputElement;
+					[
+						"input",
+						"button",
+						"textarea"
+					].includes(t.localName) && (t.setAttribute("aria-haspopup", "dialog"), ("button" === t.localName || "combobox" === t.getAttribute("role")) && t.setAttribute("aria-expanded", "false"));
+					let n = () => {
+						e.context.inputModeInit ? O(e) : ((e) => {
+							var t;
+							let n = document.createElement("div");
+							n.className = e.styles.calendar, n.dataset.vc = "calendar", n.dataset.vcInput = "", n.dataset.vcCalendarHidden = "", Object.assign(n.style, {
+								left: "0",
+								top: "0"
+							}), S(n);
+							let a = w(e.context.mainElement), l = a === document ? document.body : a;
+							g(e, "inputModeInit", !0), g(e, "isShowInInputMode", !1), g(e, "mainElement", n), l.appendChild(e.context.mainElement), nt(e, {
+								year: !0,
+								month: !0,
+								dates: !0,
+								time: !0,
+								locale: !0
+							}), O(e), e.onInit && e.onInit(e), e.context.isDestroyed || (Pe(e), null == (t = u(e).motion) || t.bind(e), Ze(e));
+						})(e);
+					};
+					e.context.inputElement.addEventListener("click", n);
+					let a = "function" == typeof e.openOnFocus || !0 === e.openOnFocus, l = () => {
+						((e) => E.has(e))(e) ? ((e) => {
+							E.delete(e);
+						})(e) : ((e) => f(e, e.openOnFocus))(e) && n();
+					};
+					a && e.context.inputElement.addEventListener("focus", l);
+					let o = (t) => {
+						let n = "Tab" === t.key && !t.shiftKey, a = [
+							"ArrowUp",
+							"ArrowDown",
+							"ArrowLeft",
+							"ArrowRight"
+						].includes(t.key);
+						(n || a) && ((t) => {
+							var n;
+							if (!e.context.isShowInInputMode || w(e.context.mainElement).activeElement !== e.context.inputElement) return !1;
+							let a = (e) => e.tabIndex >= 0 && !e.hasAttribute("disabled") && "true" !== e.getAttribute("aria-disabled"), l = null == (n = document.createTreeWalker(e.context.mainElement, NodeFilter.SHOW_ELEMENT, { acceptNode: (e) => a(e) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP }).nextNode()) ? a(e.context.mainElement) ? e.context.mainElement : null : n;
+							!l || l.tabIndex < 0 || (t.preventDefault(), l.focus());
+						})(t);
+					};
+					return e.context.inputElement.addEventListener("keydown", o), () => {
+						t.removeEventListener("click", n), a && t.removeEventListener("focus", l), t.removeEventListener("keydown", o);
+					};
+				})(e);
+				return g(e, "cleanupInput", t), t;
+			}
+			if (tt(e), qe(e), "multiple-ranged" === e.selectionDatesMode && 1 === e.context.selectedDates.length && (M(e, null), Fe(e)), e.onInit && e.onInit(e), !e.context.isDestroyed) return Pe(e), null == (t = u(e).motion) || t.bind(e), Ze(e);
+		})(this)), Ne(this, "update", (e) => at(this, e)), Ne(this, "destroy", () => {
+			let t = this.inputMode ? this.context.inputElement : this.context.mainElement;
+			if (((e) => {
+				var t, n, a, o, r, i, s, c;
+				if (!e.context.isInit) throw Error(F);
+				if (e.context.isDestroyed) throw Error("The calendar has already been destroyed, calling destroy() again is not allowed.");
+				B(e);
+				let d = u(e);
+				var m, p, h, v, y;
+				null == (t = d.motion) || t.destroy(e), null == (n = d.time) || n.destroy(e), null == (a = d.annotations) || a.destroy(e), D(e), ((e) => {
+					l.delete(e);
+				})(e), H(e), null == (o = (r = e.context).cleanupInput) || o.call(r), g(e, "cleanupInput", void 0), null == (i = e.context.cleanupHandlers) || i.forEach((e) => e()), g(e, "cleanupHandlers", []), g(e, "isShowInInputMode", !1), null == (s = (c = e.context).cleanupSystemTheme) || s.call(c), e.inputMode ? (e.context.mainElement !== e.context.inputElement && (null == (h = e.context.mainElement.parentElement) || h.removeChild(e.context.mainElement)), null == (m = e.context.inputElement) || null == (p = m.replaceWith) || p.call(m, e.context.originalElement), g(e, "inputElement", void 0)) : null == (v = (y = e.context.mainElement).replaceWith) || v.call(y, e.context.originalElement), g(e, "mainElement", e.context.originalElement), g(e, "isDestroyed", !0), e.onDestroy && e.onDestroy(e);
+			})(this), t) for (let [n, a] of e.memoizedElements) a === t && e.memoizedElements.delete(n);
+		}), Ne(this, "show", () => q(this)), Ne(this, "hide", () => $(this)), Ne(this, "set", (e, t) => ((e, t, n) => {
+			m(e, t);
+			let a = Object.keys(t);
+			t.extensions && a.splice(a.indexOf("extensions"), 1);
+			let l = 1 === a.length && "selectedDates" === a[0] ? J(e) : void 0;
+			ot(e, t), e.context.isInit && at(e, n, l);
+		})(this, e, t)), Ne(this, "context", void 0), this.context = Le(Le({}, this.context), {}, { locale: {
+			months: {
+				short: [],
+				long: []
+			},
+			weekdays: {
+				short: [],
+				long: []
+			}
+		} }), g(this, "mainElement", "string" == typeof t ? null == (a = e.memoizedElements.get(t)) ? this.queryAndMemoize(t) : a : t);
+		let o = null == n ? void 0 : n.extensions;
+		this.extensions = null != o && o.length ? Object.freeze(Array.from(new Set(o))) : d, ((e) => {
+			if (!e.extensions.length) return;
+			let t = {};
+			for (let n of e.extensions) {
+				let e = n, a = e.name;
+				if (!i.includes(a)) throw Error("Unknown calendar extension.");
+				if (t[a] && t[a] !== e) throw Error(`Conflicting calendar extension: ${a}.`);
+				Object.assign(t, { [a]: e });
+			}
+			s.set(e, t);
+		})(this), n && ot(this, n);
+	}
+	queryAndMemoize(t) {
+		let n = document.querySelector(t);
+		if (!n) throw Error(((e) => `${e} is not found, check the first argument passed to new Calendar. If the element lives inside a Shadow DOM, a string selector can't reach it - resolve the element yourself (e.g. shadowRoot.querySelector(...)) and pass it directly instead.`)(t));
+		return e.memoizedElements.set(t, n), n;
+	}
+};
+Ne(on, "memoizedElements", /* @__PURE__ */ new Map());
+//#endregion
 //#region js/src/datepicker.ts
 /**
 * --------------------------------------------------------------------------
@@ -2541,7 +5097,7 @@ var Datepicker = class extends BaseComponent {
 		this._positionElement = this._resolvePositionElement();
 		this._displayElement = this._resolveDisplayElement();
 		const calendarOptions = this._buildCalendarOptions();
-		this._calendar = new Calendar(this._positionElement, calendarOptions);
+		this._calendar = new on(this._positionElement, calendarOptions);
 		this._calendar.init();
 		this._setupThemeObserver();
 		this._setupDismiss();
@@ -2621,7 +5177,7 @@ var Datepicker = class extends BaseComponent {
 		const vcpTheme = !theme || theme === "auto" ? "system" : theme;
 		const calendarOptions = {
 			...this._config.vcpOptions,
-			extensions: [months],
+			extensions: [vt],
 			inputMode: !this._isInline,
 			positionToInput: this._config.placement,
 			firstWeekday: this._config.firstWeekday,
@@ -3699,9 +6255,9 @@ var Drawer = class extends DialogBase {
 		const element = this._element;
 		if (element.classList.contains("drawer-bottom")) swipeConfig.downCallback = () => this.hide();
 		else if (element.classList.contains("drawer-top")) swipeConfig.upCallback = () => this.hide();
-		else if (element.classList.contains("drawer-end")) if (isRTL()) swipeConfig.leftCallback = () => this.hide();
+		else if (element.classList.contains("drawer-end")) if (isRTL$1()) swipeConfig.leftCallback = () => this.hide();
 		else swipeConfig.rightCallback = () => this.hide();
-		else if (isRTL()) swipeConfig.rightCallback = () => this.hide();
+		else if (isRTL$1()) swipeConfig.rightCallback = () => this.hide();
 		else swipeConfig.leftCallback = () => this.hide();
 		this._swipeHelper = new Swipe(element, swipeConfig);
 	}
@@ -4691,7 +7247,7 @@ var TemplateFactory = class extends Config {
 			templateElement.remove();
 			return;
 		}
-		if (isElement(content)) {
+		if (isElement$1(content)) {
 			this._putElementInTemplate(getElement(content), templateElement);
 			return;
 		}
@@ -4760,9 +7316,9 @@ const EVENT_KEYDOWN$1 = "keydown";
 const AttachmentMap = {
 	AUTO: "auto",
 	TOP: "top",
-	RIGHT: isRTL() ? "left" : "right",
+	RIGHT: isRTL$1() ? "left" : "right",
 	BOTTOM: "bottom",
-	LEFT: isRTL() ? "right" : "left"
+	LEFT: isRTL$1() ? "right" : "left"
 };
 const Default$5 = {
 	allowList: DefaultAllowlist,
@@ -6205,4 +8761,4 @@ eventActionOnPlugin(Toggler, EVENT_CLICK, SELECTOR_DATA_TOGGLE, "toggle");
 //#endregion
 export { Alert, Button, Carousel, Chips, Collapse, Combobox, Datepicker, Dialog, Drawer, Menu, NavOverflow, OtpInput, Popover, Range, ScrollSpy, Strength, Tab, Toast, Toggler, Tooltip };
 
-//# sourceMappingURL=bootstrap.js.map
+//# sourceMappingURL=bootstrap.bundle.js.map
