@@ -1,150 +1,327 @@
-=== 0. 頁首 (Header) ===
-
-探索台灣 (Taiwan Explorer)
-
---- 導覽連結 --- 
-分區導覽
-體驗行程
-實用資訊
-重要資訊
-聯絡我們
-
---- 行動裝置選單 --- 
-選單
-
-=== 1. 主視覺區 (Hero Section) ===
-
-台灣：小島嶼，大冒險 從大理石峽谷到霓虹夜晚——探索四大區域，發掘無窮體驗。 探索區域
-
-=== 2. 分區導覽 (Regional Guide) ===
-
-分區導覽
-點擊地圖上的區域進行探索。
-
-=== 3. 文化與美食體驗 (Cultural & Culinary Experiences) ===
-
-文化與美食體驗
-
---- 標籤 (Tab Labels) ---
-文化體驗
-在地美食
-
---- 文化體驗 ---
-
-寺廟禮儀巡禮
-學習上香儀式、抽籤及在地習俗。
-
-原住民工藝
-與原住民工匠一起製作織品與木雕。
-
-阿里山茶道
-品嚐高山烏龍茶並學習沖泡技藝。
-
---- 在地美食 ---
-
-夜市品嚐
-臭豆腐、珍珠奶茶、蚵仔煎等在地美味。
-
-花蓮產地到餐桌
-新鮮漁獲、海景與在地食譜。
-
-鳳梨酥手作坊
-親手製作經典點心帶回家。
-
---- 行動呼籲 (Call to Action) ---
-詢問此體驗
-
-=== 4. 實用資訊 (Practical Information) ===
-
-實用資訊
-整理行囊——讓旅行變得簡單。
-
---- 標籤 (Tab Labels) ---
-交通
-住宿
-購物
-
-=== 5. 重要資訊 (Essential Information) ===
-
-重要資訊
-台灣之旅的官方支援與關鍵聯絡方式。
-
---- 台灣觀光署字卡 ---
-
-中華民國交通部觀光署
+Taiwan Explorer 雙語內容 / Bilingual Content
+(EN = English, ZH = 繁體中文)
+ 
+=== 0. Header 頁首 ===
+ 
+[Logo]
+EN: Taiwan Explorer
+ZH: 探索台灣
+ 
+--- Nav Links 導覽連結 ---
+EN: Regional Guide
+ZH: 分區導覽
+ 
+EN: Experiences
+ZH: 體驗行程
+ 
+EN: Practical Information
+ZH: 實用資訊
+ 
+EN: Essential Information
+ZH: 重要資訊
+ 
+EN: Contact
+ZH: 聯絡我們
+ 
+--- Mobile Menu 行動裝置選單 ---
+EN: Menu
+ZH: 選單
+ 
+=== 1. Hero Section 主視覺區 ===
+ 
+[Title]
+EN: Taiwan: Small Island, Big Adventures
+ZH: 台灣：小島嶼，大冒險
+ 
+[Subtitle]
+EN: From marble gorges to neon nights—discover four regions, countless experiences.
+ZH: 從大理石峽谷到霓虹夜晚——探索四大區域，發掘無窮體驗。
+ 
+[Button]
+EN: Explore Regions
+ZH: 探索區域
+ 
+=== 2. Regional Guide 分區導覽 ===
+ 
+[Title]
+EN: Regional Guide
+ZH: 分區導覽
+ 
+[Subtitle]
+EN: Click a region on the map to explore.
+ZH: 點擊地圖上的區域進行探索。
+ 
+--- North 北部 ---
+EN: North
+ZH: 北部
+ 
+EN: Urban energy & nature: Taipei 101, night markets, Jiufen's old streets, Yehliu's unique geology.
+ZH: 都會活力與自然風光：台北101、夜市、九份老街、野柳獨特地質。
+ 
+EN: Taipei 101: Skyscraper views & luxury mall
+ZH: 台北101：摩天大樓景觀與精品商場
+ 
+EN: Jiufen: Hillside lantern alleys & tea houses
+ZH: 九份：山城燈籠小巷與茶樓
+ 
+EN: Yehliu Geopark: Otherworldly sea-eroded rock formations
+ZH: 野柳地質公園：宛如異世界的海蝕岩景
+ 
+--- Central 中部 ---
+EN: Central
+ZH: 中部
+ 
+EN: Misty mountains & lakes: Sun Moon Lake cycling, Taichung art, Alishan sunrise forests.
+ZH: 雲霧山巒與湖泊：日月潭單車、台中藝術、阿里山日出森林。
+ 
+--- South 南部 ---
+EN: South
+ZH: 南部
+ 
+EN: Historic flavors & beaches: Tainan temples, Kaohsiung harbor art, Kenting's tropical coast.
+ZH: 古都風味與海灘：台南古廟、高雄港灣藝術、墾丁熱帶海岸。
+ 
+--- East 東部 ---
+EN: East
+ZH: 東部
+ 
+EN: Wild coasts & gorges: Taroko marble cliffs, Hualien ocean vistas, Taitung hot air vibes.
+ZH: 狂野海岸與峽谷：太魯閣大理石峭壁、花蓮海景、台東熱氣球風情。
+ 
+=== 3. Cultural & Culinary Experiences 文化與美食體驗 ===
+ 
+[Title]
+EN: Cultural & Culinary Experiences
+ZH: 文化與美食體驗
+ 
+--- Tab Labels 標籤 ---
+EN: Cultural
+ZH: 文化體驗
+ 
+EN: Culinary
+ZH: 在地美食
+ 
+--- Cultural 文化體驗 ---
+ 
+EN: Temple Etiquette Walk
+ZH: 寺廟禮儀巡禮
+EN: Learn incense rituals, fortune sticks, and local customs.
+ZH: 學習上香儀式、抽籤及在地習俗。
+ 
+EN: Indigenous Crafts
+ZH: 原住民工藝
+EN: Make textiles and wood carvings with Indigenous artisans.
+ZH: 與原住民工匠一起製作織品與木雕。
+ 
+EN: Alishan Tea Ceremony
+ZH: 阿里山茶道
+EN: Taste high-mountain oolong and learn the art of brewing.
+ZH: 品嚐高山烏龍茶並學習沖泡技藝。
+ 
+--- Culinary 在地美食 ---
+ 
+EN: Night Market Tasting
+ZH: 夜市品嚐
+EN: Stinky tofu, bubble tea, oyster omelets, and other local flavors.
+ZH: 臭豆腐、珍珠奶茶、蚵仔煎等在地美味。
+ 
+EN: Hualien Farm-to-Table
+ZH: 花蓮產地到餐桌
+EN: Fresh seafood, ocean views, and local recipes.
+ZH: 新鮮漁獲、海景與在地食譜。
+ 
+EN: Pineapple Cake Workshop
+ZH: 鳳梨酥手作坊
+EN: Bake a classic treat by hand and take it home.
+ZH: 親手製作經典點心帶回家。
+ 
+--- Image Caption 圖片說明 ---
+EN: Cultural — Temple Etiquette Walk
+ZH: 文化體驗 — 寺廟禮儀巡禮
+ 
+--- Call to Action 行動呼籲 ---
+EN: Ask about this experience
+ZH: 詢問此體驗
+ 
+--- Carousel aria-labels 輪播按鈕 ---
+EN: Previous / Next
+ZH: 上一則 / 下一則
+ 
+=== 4. Practical Information 實用資訊 ===
+ 
+[Title]
+EN: Practical Information
+ZH: 實用資訊
+ 
+[Subtitle]
+EN: Pack the essentials—travel made simple.
+ZH: 整理行囊——讓旅行變得簡單。
+ 
+--- Tab Labels 標籤 ---
+EN: Transportation
+ZH: 交通
+ 
+EN: Accommodation
+ZH: 住宿
+ 
+EN: Shopping
+ZH: 購物
+ 
+--- Transportation Cards 交通卡片 ---
+EN: High-Speed Rail (HSR)
+ZH: 高速鐵路（高鐵）
+ 
+EN: TRA & Local Lines
+ZH: 台鐵與地方鐵路
+ 
+EN: Metro & Buses
+ZH: 捷運與公車
+ 
+=== 5. Essential Information 重要資訊 ===
+ 
+[Title]
+EN: Essential Information
+ZH: 重要資訊
+ 
+[Subtitle]
+EN: Official support and key contacts for your trip to Taiwan.
+ZH: 台灣之旅的官方支援與關鍵聯絡方式。
+ 
+--- Tourism Bureau Card 觀光署字卡 ---
+EN: Taiwan Tourism Bureau
+ZH: 中華民國交通部觀光署
+ 
 +886-2-0000-0000
-info@example.com example.com
-
-語音朗讀
-停止
-此瀏覽器不支援語音合成功能。
-
---- 語音內容 (Spoken Version) ---
-
-台灣觀光署：電話 +886-2-0000-0000。電子郵件 info at example dot com。官方網站 example dot com。如需緊急援助，請撥打 110 報警或 119 救護。
-
---- 官方網站 QR Code 字卡 ---
-
-官方網站 QR Code
-掃描造訪官方觀光網站。
-開啟網站
-
---- 緊急及安全聯絡字卡 ---
-
-緊急及安全聯絡電話
-報警：110
-消防/救護車：119
-旅遊諮詢熱線：0800-000-000
-
---- 導覽手冊下載字卡 ---
-
-旅遊手冊下載
-包含地圖、行程與台灣旅遊必備資訊的綜合 PDF 手冊。
-下載旅遊手冊 (PDF)
-
-=== 6. 聯絡表單 (Contact Form) ===
-
-旅遊諮詢
-獲取專屬於您的台灣冒險規劃建議。
-
---- 表單標籤 ---
-姓名
-電子郵件
-國家/地區
-興趣點
-訊息
-
---- 預留文字 (Placeholders) ---
-您的全名
-you@example.com
-您來自哪裡？
-文化、美食、自然、海灘…
-告訴我們您的夢想台灣之旅！
-
---- 錯誤訊息 ---
-請輸入您的姓名
-請輸入有效的電子郵件
-請簡述您的計畫
-
---- 表單頁尾 ---
-提交
-
---- 成功訊息 ---
-謝謝！我們已收到您的請求。
-我們將會提供 [region] 區域的旅遊建議給您。
-
-=== 7. 頁尾 (Footer) ===
-
-探索台灣 (Taiwan Explorer)
-
---- 社群媒體 (aria-labels) ---
+info@example.com
+example.com
+ 
+EN: Read aloud
+ZH: 語音朗讀
+ 
+EN: Stop
+ZH: 停止
+ 
+EN: Speech synthesis is not supported in this browser.
+ZH: 此瀏覽器不支援語音合成功能。
+ 
+--- Spoken Version 語音內容 ---
+EN: Taiwan Tourism Bureau: phone +886-2-0000-0000. Email info at example dot com. Official website example dot com. For emergency assistance, call 110 for police or 119 for ambulance.
+ZH: 台灣觀光署：電話 +886-2-0000-0000。電子郵件 info at example dot com。官方網站 example dot com。如需緊急援助，請撥打 110 報警或 119 救護。
+ 
+--- Official Website QR Card 官方網站 QR Code 字卡 ---
+EN: Official Website QR
+ZH: 官方網站 QR Code
+ 
+EN: Scan to visit the official tourism website.
+ZH: 掃描造訪官方觀光網站。
+ 
+EN: Open site
+ZH: 開啟網站
+ 
+--- Emergency Card 緊急及安全聯絡字卡 ---
+EN: Emergency & Safety Contacts
+ZH: 緊急及安全聯絡電話
+ 
+EN: Police: 110
+ZH: 報警：110
+ 
+EN: Fire/Ambulance: 119
+ZH: 消防/救護車：119
+ 
+EN: Tourist Hotline: 0800-000-000
+ZH: 旅遊諮詢熱線：0800-000-000
+ 
+--- Download Card 導覽手冊下載字卡 ---
+EN: Downloadable Travel Guide
+ZH: 旅遊手冊下載
+ 
+EN: Comprehensive PDF guide with maps, itineraries, and essential tips for your Taiwan adventure.
+ZH: 包含地圖、行程與台灣旅遊必備資訊的綜合 PDF 手冊。
+ 
+EN: Download Travel Guide (PDF)
+ZH: 下載旅遊手冊 (PDF)
+ 
+=== 6. Contact Form 聯絡表單 ===
+ 
+[Title]
+EN: Travel Consultation
+ZH: 旅遊諮詢
+ 
+[Subtitle]
+EN: Get personalized recommendations for your Taiwan adventure.
+ZH: 獲取專屬於您的台灣冒險規劃建議。
+ 
+--- Labels 表單標籤 ---
+EN: Name
+ZH: 姓名
+ 
+EN: Email
+ZH: 電子郵件
+ 
+EN: Country
+ZH: 國家/地區
+ 
+EN: Interests
+ZH: 興趣點
+ 
+EN: Message
+ZH: 訊息
+ 
+--- Placeholders 預留文字 ---
+EN: Your full name
+ZH: 您的全名
+ 
+EN: you@example.com
+ZH: you@example.com
+ 
+EN: Where are you based?
+ZH: 您來自哪裡？
+ 
+EN: Culture, food, nature, beaches...
+ZH: 文化、美食、自然、海灘…
+ 
+EN: Tell us about your dream Taiwan trip!
+ZH: 告訴我們您的夢想台灣之旅！
+ 
+--- Error Messages 錯誤訊息 ---
+EN: Please enter your name
+ZH: 請輸入您的姓名
+ 
+EN: Please enter a valid email
+ZH: 請輸入有效的電子郵件
+ 
+EN: Please briefly describe your plans
+ZH: 請簡述您的計畫
+ 
+--- Submit Button 提交按鈕 ---
+EN: Submit
+ZH: 提交
+ 
+--- Success Message 成功訊息 ---
+EN: Thank you! We've received your request.
+ZH: 謝謝！我們已收到您的請求。
+ 
+EN: We'll send you travel recommendations for the [region] region.
+ZH: 我們將會提供 [region] 區域的旅遊建議給您。
+ 
+=== 7. Footer 頁尾 ===
+ 
+EN: Taiwan Explorer
+ZH: 探索台灣
+ 
+--- Social Media (aria-labels) 社群媒體 ---
 Facebook
 Instagram
 YouTube
-
---- 版權所有 ---
-© [year] 探索台灣 (Taiwan Explorer)
-
---- 頁尾連結 ---
-隱私權政策
-條款與細則
+ 
+--- Copyright 版權所有 ---
+EN: © [year] Taiwan Explorer
+ZH: © [year] 探索台灣
+ 
+--- Footer Links 頁尾連結 ---
+EN: Privacy Policy
+ZH: 隱私權政策
+ 
+EN: Terms and Conditions
+ZH: 條款與細則
+ 

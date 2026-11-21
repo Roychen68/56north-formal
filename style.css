@@ -18,13 +18,36 @@ main{
     flex: 1;
 }
 
-header{
-    text-align: center;
-}
-
 img.logo{
     border-radius: 10px;
     background: #ffffff;
     padding: 5px;
     height: 100px;
+}
+
+section#hero picture img,source  {
+    width: 100%;
+    object-fit: cover;
+}
+
+section#hero article  {
+    color: #ffffff;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    p {
+        font-size: 1rem;
+    }
+}
+
+a.cta{
+    border: none;
+    background: #12B981;
+    width: auto;
+    font-size: 24px;
+    padding: 5px 15px;
+    color: #ffffff;
+    border-radius: 10px;
+    text-decoration: none;
+    cursor: pointer;
 }
