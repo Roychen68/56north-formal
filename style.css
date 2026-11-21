@@ -51,3 +51,26 @@ a.cta{
     text-decoration: none;
     cursor: pointer;
 }
+
+
+svg#map{
+    height: auto;
+    overflow: hidden;
+}
+
+
+path{
+    transition: .3s;
+}
+#TWTPE:hover{
+    fill: #F7CF02;
+}
+#TWHUA:hover{
+    fill: #862297;
+}
+#TWTXG:hover{
+    fill: #F89400;
+}
+#TWTNN:hover{
+    fill: #8BC34A;
+}
