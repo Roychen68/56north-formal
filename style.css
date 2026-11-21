@@ -61,6 +61,7 @@ svg#map{
 
 path{
     transition: .3s;
+    position: relative;
 }
 #TWTPE:hover{
     fill: #F7CF02;
