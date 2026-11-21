@@ -302,14 +302,15 @@
         },
         methods: {
             city(current) {
+                $(".detail").remove()
                 if (current != "") {
-                    $("#" + current + "").after(`
+                    $("#" + current).before(`
                 <div class="card card-body detail">
-                    <p>${this.regional.cities[current].title}</p>
-                    <p>${this.regional.cities[current].detail}</p>
+                    <p>${this.regional.cities[current].title[this.lang]}</p>
+                    <p>${this.regional.cities[current].detail[this.lang]}</p>
                 </div>`)
+                    console.log("after added")
                 }
-                console.log(current)
             }
         },
         mounted() {
